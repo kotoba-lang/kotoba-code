@@ -14,6 +14,7 @@
             [kotoba-code.host :as host]
             [kotoba-code.agent :as agent]
             [kotoba-code.gate :as gate]
+            [kotoba-code.resilience :as resilience]
             [langchain.model :as model]
             [langchain.kotoba-db :as kdb]
             [langgraph.checkpoint :as cp])
@@ -48,7 +49,11 @@
       (println "usage: clojure -M:run \"<task>\" <project-root> [model-id]")
       (System/exit 2))
     (let [h     (host/fs-host root)
-          model (build-model model-id)
+          model (resilience/retrying-model
+                 (build-model model-id)
+                 {:on-retry (fn [n e]
+                              (println (format "  [retry %d] model call failed (%s); backing off…"
+                                               n (.getMessage ^Throwable e))))})
           cpr   (kotoba-checkpointer)
           a     (agent/build-agent {:model model :host h :checkpointer cpr})
           sess  (or (System/getenv "KC_SESSION") "kotoba-code")
