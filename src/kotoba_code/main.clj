@@ -60,8 +60,9 @@
           _     (println (str "── kotoba-code ── root=" root
                               " model=" (or model-id "moonshotai/kimi-k2.7-code")
                               (when cpr " kotoba-Datom=on") " session=" sess))
-          {:keys [green? test-out answer]} (gate/run-gated a task h {:session-id sess})]
-      (println "\n── agent ──\n" answer)
+          {:keys [green? test-out answer error]} (gate/run-gated a task h {:session-id sess})]
+      (println "\n── agent ──\n" (or answer ""))
+      (when error (println "\n── error ──" error "(working tree rolled back)"))
       (println "\n── gate ──" (if green? "GREEN ✓" "NOT GREEN ✗ (working tree rolled back)"))
-      (println (subs test-out (max 0 (- (count test-out) 600))))
+      (when (seq test-out) (println (subs test-out (max 0 (- (count test-out) 600)))))
       (System/exit (if green? 0 1)))))

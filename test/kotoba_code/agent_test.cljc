@@ -64,6 +64,18 @@
     (is (some #(= :tool (:role %)) (:messages final)))
     (is (some #(= [:ls "."] %) @(:calls host)) "list_dir tool reached the host")))
 
+(deftest gate-rolls-back-when-agent-throws
+  ;; a crashing agent loop (e.g. model error after retries) must still roll back —
+  ;; otherwise partial edits leak into the next run (the Phase 2c segment-44 leak).
+  (let [host  (mock-host {:test-output "0 failures, 0 errors."})
+        model (model/mock-model
+               (fn [_ _] (throw (ex-info "model error after retries" {:status 503}))))
+        a     (agent/build-agent {:model model :host host})
+        {:keys [green? error]} (gate/run-gated a "task" host {})]
+    (is (false? green?))
+    (is (= "model error after retries" error))
+    (is (some #(= [:rollback] %) @(:calls host)) "rollback fired on agent throw")))
+
 (deftest green?-detects-suite-state
   (is (gate/green? "Ran 1 tests containing 1 assertions.\n0 failures, 0 errors."))
   (is (not (gate/green? "Ran 1 tests containing 1 assertions.\n1 failures, 0 errors.")))
