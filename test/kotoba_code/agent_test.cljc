@@ -64,6 +64,30 @@
     (is (some #(= :tool (:role %)) (:messages final)))
     (is (some #(= [:ls "."] %) @(:calls host)) "list_dir tool reached the host")))
 
+(deftest gate-feedback-loop-recovers-a-red-then-green
+  ;; round 1 leaves the suite red; the failure is fed back and round 2 turns it green.
+  ;; (the model just calls run_tests; the host returns red first, green after.)
+  (let [outs  (atom ["1 failures, 0 errors." "0 failures, 0 errors."])
+        calls (atom [])
+        host  {:read-file (fn [_] "x") :write-file (fn [p _] (str "w " p))
+               :run-clojure (fn [_] "nil")
+               :run-tests (fn [] (swap! calls conj :test) (let [o (first @outs)] (swap! outs rest) o))
+               :rollback (fn [] (swap! calls conj :rollback) :rb)
+               :list-dir (fn [_] "") :search (fn [_] "")}
+        ;; model edits a file then DONEs each round; the gate (not the model) runs tests,
+        ;; so run-tests is consumed only by the gate: round1 red, round2 green.
+        model (model/mock-model
+               (fn [messages _]
+                 (if (some #(= :tool (:role %)) messages)
+                   (msg/ai "DONE")
+                   (msg/ai "" {:tool-calls [{:id "t" :name "write_file"
+                                             :input {:path "src/x.clj" :content "x"}}]}))))
+        a     (agent/build-agent {:model model :host host})
+        {:keys [green? rounds]} (gate/run-gated a "make it pass" host {:rounds 3})]
+    (is (true? green?) "second round goes green")
+    (is (= 2 rounds) "took 2 rounds")
+    (is (not (some #{:rollback} @calls)) "no rollback once green")))
+
 (deftest gate-rolls-back-when-agent-throws
   ;; a crashing agent loop (e.g. model error after retries) must still roll back —
   ;; otherwise partial edits leak into the next run (the Phase 2c segment-44 leak).

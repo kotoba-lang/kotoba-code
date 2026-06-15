@@ -55,14 +55,18 @@
                               (println (format "  [retry %d] model call failed (%s); backing off…"
                                                n (.getMessage ^Throwable e))))})
           cpr   (kotoba-checkpointer)
-          a     (agent/build-agent {:model model :host h :checkpointer cpr})
+          rlim  (some-> (System/getenv "KC_RECURSION_LIMIT") Integer/parseInt)
+          a     (agent/build-agent (cond-> {:model model :host h :checkpointer cpr}
+                                     rlim (assoc :recursion-limit rlim)))
           sess  (or (System/getenv "KC_SESSION") "kotoba-code")
           _     (println (str "── kotoba-code ── root=" root
                               " model=" (or model-id "moonshotai/kimi-k2.7-code")
                               (when cpr " kotoba-Datom=on") " session=" sess))
-          {:keys [green? test-out answer error]} (gate/run-gated a task h {:session-id sess})]
+          gate-rounds (or (some-> (System/getenv "KC_GATE_ROUNDS") Integer/parseInt) 1)
+          {:keys [green? test-out answer error rounds]} (gate/run-gated a task h {:session-id sess :rounds gate-rounds})]
       (println "\n── agent ──\n" (or answer ""))
       (when error (println "\n── error ──" error "(working tree rolled back)"))
-      (println "\n── gate ──" (if green? "GREEN ✓" "NOT GREEN ✗ (working tree rolled back)"))
+      (println "\n── gate ──" (if green? "GREEN ✓" "NOT GREEN ✗ (working tree rolled back)")
+               (when rounds (str "[" rounds "/" gate-rounds " rounds]")))
       (when (seq test-out) (println (subs test-out (max 0 (- (count test-out) 600)))))
       (System/exit (if green? 0 1)))))
