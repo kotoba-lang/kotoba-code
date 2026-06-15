@@ -77,7 +77,12 @@
 
      :run-tests
      (fn []
-       (let [{:keys [out err]} (sh/sh "clojure" "-X:test" :dir (.getPath root*))]
+       ;; KC_TEST_CMD env override — run an arbitrary test command in the project root
+       ;; (e.g. a babashka sweep for bb-based projects). Default: clojure -X:test.
+       (let [cmd (System/getenv "KC_TEST_CMD")
+             {:keys [out err]} (if (and cmd (not (str/blank? cmd)))
+                                 (sh/sh "bash" "-lc" cmd :dir (.getPath root*))
+                                 (sh/sh "clojure" "-X:test" :dir (.getPath root*)))]
          (str out err)))
 
      :list-dir
