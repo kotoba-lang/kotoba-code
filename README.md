@@ -31,6 +31,63 @@ git rollback); `main.clj` is the CLI.
 - kotoba persistence is `datomic-checkpointer` with `:db-api (kdb/kotoba-api …)`, never the in-process demo store.
 - stop the moment tests are green; no speculative edits after green.
 
+## Inference backend status
+
+`kotoba-code` itself does **not** call Ollama directly. The CLI currently chooses:
+
+- OpenRouter by default, through `langchain.model/openai-model`
+- Murakumo when the model id starts with `murakumo:`, through the local OpenAI-compatible gateway at `http://127.0.0.1:4000/v1/chat/completions`
+
+Ollama can still sit behind an OpenAI-compatible gateway, but it is not a first-class
+dependency here. In this workspace the direct `ollama` mention is in the yukkuri
+asset scorer, not in `kotoba-code`.
+
+`src/kotoba_code/inference.cljc` adds the CLJC boundary for local/web inference:
+
+```clojure
+(require '[kotoba-code.inference :as infer])
+
+(def plan
+  (infer/select-plan {:target :web
+                      :model "cid:your-model"
+                      :format :kotoba-fp8}))
+
+(-> (infer/load-weights! "/models/tiny.kotoba.fp8")
+    ;; CLJS returns a Promise. CLJ returns the map immediately.
+    )
+
+(def backend
+  (infer/kotoba-wasm-backend
+   {:infer (fn [{:keys [plan weights prompt]}]
+             ;; call the loaded Kotoba WASM module here
+             {:text (str "model=" (:model plan) " prompt=" prompt)})}))
+
+(infer/infer! {:backend backend
+               :plan plan
+               :weights {:byte-length 123}
+               :prompt "hello"})
+```
+
+The target profiles are intentionally runtime-neutral:
+
+| Target | Inference preference | Training preference |
+|---|---|---|
+| Web | Kotoba WASM, ONNX Runtime WebGPU, ONNX Runtime WASM | ONNX Runtime Web training, remote Murakumo |
+| macOS / Apple Silicon | Candle Metal, llama.cpp Metal, Kotoba WASM, Murakumo HTTP | MLX, PyTorch MPS, remote Murakumo |
+| Windows + Intel Arc | ONNX Runtime DirectML, OpenVINO, llama.cpp SYCL/Vulkan, Kotoba WASM | OpenVINO/PyTorch XPU, remote Murakumo |
+| Linux + CUDA | vLLM CUDA, llama.cpp CUDA, Candle CUDA, Murakumo HTTP, Kotoba WASM | PyTorch CUDA, Burn CUDA, remote Murakumo |
+
+Kotoba WASM is AOT for the program: `kotoba-clj` compiles safe Clojure/EDN-subset
+source into WASM component bytes ahead of execution. Model weights are not AOT;
+they are runtime data loaded by CID, URL, file path, or browser `fetch`.
+
+WebGPU/wgpu can optimize per GPU family, but the practical split is:
+
+- browser: use WebGPU through ONNX Runtime Web or a Kotoba WASM host that delegates compute to WebGPU
+- native Rust: use `wgpu` for portable kernels, or vendor stacks when they are clearly faster
+- CUDA production: prefer vLLM/llama.cpp/Candle CUDA behind Murakumo
+- Intel Arc production: prefer DirectML/OpenVINO/SYCL or Vulkan before assuming browser WebGPU is enough
+
 ## Use
 
 ```bash

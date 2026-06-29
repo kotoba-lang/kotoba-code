@@ -1,0 +1,48 @@
+(ns kotoba-code.inference-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [kotoba-code.inference :as infer])
+  (:import [java.nio.file Files]))
+
+(deftest selects-web-kotoba-wasm-by-default
+  (let [plan (infer/select-plan {:target :web
+                                 :model "cid:model"
+                                 :format :kotoba-fp8})]
+    (is (= :kotoba-wasm (:backend plan)))
+    (is (= :inference (:mode plan)))
+    (is (= :kotoba-fp8 (:format plan)))
+    (is (some #{:onnxruntime-webgpu} (:candidates plan)))))
+
+(deftest honors-target-specific-preference
+  (testing "Intel Arc can prefer OpenVINO when requested"
+    (is (= :openvino
+           (:backend (infer/select-plan {:target :windows-intel-arc
+                                         :prefer [:openvino]})))))
+  (testing "unknown preferences are ignored in favor of target defaults"
+    (is (= :vllm-cuda
+           (:backend (infer/select-plan {:target :linux-cuda
+                                         :prefer [:openvino]}))))))
+
+(deftest load-weights-from-local-file
+  (let [tmp (Files/createTempFile "kotoba-code-weight" ".bin" (make-array java.nio.file.attribute.FileAttribute 0))
+        _   (Files/write tmp (byte-array [1 2 3 4]) (make-array java.nio.file.OpenOption 0))
+        loaded (infer/load-weights! (str tmp))]
+    (is (= 4 (:byte-length loaded)))
+    (is (= [1 2 3 4] (vec (:bytes loaded))))))
+
+(deftest kotoba-wasm-backend-calls-injected-host
+  (let [seen (atom nil)
+        backend (infer/kotoba-wasm-backend
+                 {:infer (fn [req]
+                           (reset! seen req)
+                           {:text "ok"})})
+        plan (infer/select-plan {:target :web})
+        out (infer/infer! {:backend backend
+                           :plan plan
+                           :weights {:byte-length 16}
+                           :prompt "hello"})]
+    (is (= {:text "ok"} out))
+    (is (= "hello" (:prompt @seen)))
+    (is (= :kotoba-wasm (get-in @seen [:plan :backend])))))
+
+(deftest kotoba-wasm-is-aot-program-not-aot-weight
+  (is (true? (infer/aot-kotoba-wasm?))))
