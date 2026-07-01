@@ -6,8 +6,8 @@
  ;; Sibling local roots under orgs/com-junkawasaki/. The top-level langchain-clj
  ;; :local/root overrides langgraph-clj's transitive git dep so the stack resolves
  ;; offline against the local checkouts.
- :deps {io.github.com-junkawasaki/langchain-clj {:local/root "../langchain-clj"}
-        io.github.com-junkawasaki/langgraph-clj {:local/root "../langgraph-clj"}
+ :deps {io.github.com-junkawasaki/langchain-clj {:local/root "../../com-junkawasaki/langchain-clj"}
+        io.github.com-junkawasaki/langgraph-clj {:local/root "../../com-junkawasaki/langgraph-clj"}
         org.clojure/data.json {:mvn/version "2.5.0"}}
  :aliases
  {:test {:extra-paths ["test"]
