@@ -1,13 +1,12 @@
 {:paths ["src"]
  ;; kotoba-code — a model-neutral, test-gated, kotoba-Datom-backed agentic coding
  ;; agent. Built on the kotoba-clj stack:
- ;;   langchain-clj — ChatModel (openai-model → OpenRouter/Murakumo) + tools + kotoba-db
- ;;   langgraph-clj — create-react-agent loop + datomic-checkpointer (kotoba persistence)
- ;; Sibling local roots under orgs/com-junkawasaki/. The top-level langchain-clj
- ;; :local/root overrides langgraph-clj's transitive git dep so the stack resolves
- ;; offline against the local checkouts.
- :deps {io.github.com-junkawasaki/langchain-clj {:local/root "../../com-junkawasaki/langchain-clj"}
-        io.github.com-junkawasaki/langgraph-clj {:local/root "../../com-junkawasaki/langgraph-clj"}
+ ;;   langchain — ChatModel (openai-model → OpenRouter/Murakumo) + tools + kotoba-db
+ ;;   langgraph — create-react-agent loop + datomic-checkpointer (kotoba persistence)
+ :deps {io.github.kotoba-lang/langchain {:git/url "https://github.com/kotoba-lang/langchain.git"
+                                         :sha "c7943d7542f28242a654ff3e0c37100b48a9417d"}
+        io.github.kotoba-lang/langgraph {:git/url "https://github.com/kotoba-lang/langgraph.git"
+                                         :sha "5b4e5e70837b849b14b6a5800894e3be202ad5fa"}
         org.clojure/data.json {:mvn/version "2.5.0"}}
  :aliases
  {:test {:extra-paths ["test"]
