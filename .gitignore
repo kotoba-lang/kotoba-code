@@ -4,3 +4,4 @@
 /target/
 **/.cpcache/
 *.log
+/.compare-openrouter/

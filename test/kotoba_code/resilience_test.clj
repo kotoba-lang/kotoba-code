@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [deftest is testing]]
             [langchain.model :as model]
             [langchain.message :as msg]
-            [kotoba-code.resilience :as r]))
+            [kotoba-code.resilience :as r])
+  (:import [java.net SocketTimeoutException]))
 
 (defn- flaky-model
   "A ChatModel that throws on its first (fail-n) calls, then returns `ok-msg`."
@@ -30,6 +31,31 @@
       (is (thrown? clojure.lang.ExceptionInfo
                    (model/-generate m [(msg/user "hi")] {})))
       (is (= 3 @calls) "tried exactly :attempts times"))))
+
+(deftest does-not-retry-non-transient-errors
+  (let [calls (atom 0)
+        m (r/retrying-model
+           (reify model/ChatModel
+             (-generate [_ _messages _opts]
+               (swap! calls inc)
+               (throw (ex-info "bad api key" {:status 401}))))
+           {:attempts 4 :backoff-ms 0})]
+    (is (thrown? clojure.lang.ExceptionInfo
+                 (model/-generate m [(msg/user "hi")] {})))
+    (is (= 1 @calls) "auth/configuration failures should not burn retry budget")))
+
+(deftest retries-network-errors
+  (let [calls (atom 0)
+        m (r/retrying-model
+           (reify model/ChatModel
+             (-generate [_ _messages _opts]
+               (let [n (swap! calls inc)]
+                 (if (= n 1)
+                   (throw (SocketTimeoutException. "timed out"))
+                   (msg/ai "network recovered")))))
+           {:attempts 3 :backoff-ms 0})]
+    (is (= "network recovered" (msg/text (model/-generate m [(msg/user "hi")] {}))))
+    (is (= 2 @calls))))
 
 (deftest passes-through-on-first-success
   (let [calls (atom 0)
