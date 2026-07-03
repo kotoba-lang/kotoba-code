@@ -19,6 +19,16 @@
        " and fix until the suite is fully green.\n--- test output (tail) ---\n"
        (subs test-out (max 0 (- (count test-out) 1800)))))
 
+(defn- rollback-result [host]
+  (if-let [rollback (:rollback host)]
+    (try
+      (rollback)
+      {:rolled-back? true}
+      (catch #?(:clj Throwable :cljs :default) e
+        {:rolled-back? true
+         :rollback-error (ex-message e)}))
+    {:rolled-back? false}))
+
 (defn run-gated
   "Run the agent on `task`, then enforce the gate against the host's own test run.
   If the suite is RED and `:rounds` > 1, the failure is fed back to the agent and it
@@ -35,19 +45,20 @@
             ok       (green? test-out)]
         (cond
           ok
-          {:green? true :test-out test-out :final final :answer (agent/answer final) :rounds round}
+          {:green? true :test-out test-out :final final :answer (agent/answer final)
+           :rounds round :rolled-back? false}
 
           (< round rounds)
           (recur (inc round) (retry-task task round test-out))
 
           :else
-          (do (when (:rollback host) ((:rollback host)))
-              {:green? false :test-out test-out :final final
-               :answer (agent/answer final) :rounds round}))))
+          (merge {:green? false :test-out test-out :final final
+                  :answer (agent/answer final) :rounds round}
+                 (rollback-result host)))))
     (catch #?(:clj Throwable :cljs :default) e
-      (when (:rollback host) ((:rollback host)))
-      {:green?   false
-       :error    (ex-message e)
-       :test-out ""
-       :final    nil
-       :answer   nil})))
+      (merge {:green?   false
+              :error    (ex-message e)
+              :test-out ""
+              :final    nil
+              :answer   nil}
+             (rollback-result host)))))
