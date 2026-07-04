@@ -110,9 +110,16 @@
 
 (deftest interactive-help-renders-catalog-usage
   (let [out (with-out-str (#'main/print-help!))]
-    (is (str/includes? out "usage: :help aliases=:h [help]"))
+    (is (str/includes? out "usage: :help aliases=:h,/help [help]"))
+    (is (str/includes? out "usage: :clear [NAME] aliases=/clear,/reset,/new [session]"))
+    (is (str/includes? out "usage: :compact [INSTRUCTIONS] aliases=/compact [session]"))
+    (is (str/includes? out "usage: :config [KEY=VALUE] aliases=/config [session]"))
+    (is (str/includes? out "usage: :model [MODEL] aliases=/model [session]"))
+    (is (str/includes? out "usage: :permissions [RULE=VALUE] aliases=/permissions [session]"))
+    (is (str/includes? out "usage: :sandbox [KEY=VALUE] aliases=/sandbox [session]"))
     (is (str/includes? out "usage: :history [N] [supervisor]"))
     (is (str/includes? out "usage: :read PATH [START] [END] [inspect]"))
+    (is (str/includes? out "/clear starts fresh"))
     (is (str/includes? out "Any other non-command input is treated as a coding task."))))
 
 (deftest capabilities-exit-code-policy-matches-command-catalog
@@ -160,7 +167,7 @@
                                 (:checks report))]
           (is (true? (:ready? report)))
           (is (= true (:ok? credentials)))
-          (is (= "local murakumo gateway selected" (:detail credentials))))))))
+          (is (= "murakumo.cloud Anthropic gateway selected" (:detail credentials))))))))
 
 (deftest check-output-includes-next-action-and-keeps-ready-last
   (let [dir (temp-dir)
@@ -398,43 +405,54 @@
 
 (deftest state-report-combines-readiness-budget-and-log-metadata
   (let [dir (temp-dir)
-        report (#'main/state-report
-                (runtime dir "murakumo:gemma3:4b"))]
-    (is (= (.getPath (io/file dir)) (:root report)))
-    (is (= "murakumo:gemma3:4b" (:model report)))
-    (is (= {:loop-id "main-test"
-            :session "main-test"
-            :worker-id "local"
-            :model "murakumo:gemma3:4b"}
-           (:runtime report)))
-    (is (true? (:ready? report)))
-    (is (= :continue (get-in report [:budget :decision])))
-    (is (= {:action :run-task
-            :reason :ready
-            :command "clojure -M:run \"<task>\" <project-root> [model-id]"
-            :interactive "<task>"}
-           (:next-action report)))
-    (is (contains? report :doctor))
-    (is (contains? report :latest))
-    (is (= {:ticks 0
-            :by-status {}
-            :events {}
-            :latest-run-summary nil
-            :latest-tool-error nil
-            :latest-error nil
-            :latest-refusal nil
-            :latest-control nil}
-           (:metrics report)))
-    (is (= {:present? false
-            :owner nil
-            :current-owner "local"
-            :expires-at nil
-            :valid? false
-            :stale? false
-            :conflict? false
-            :takeover? false}
-           (:lease-status report)))
-    (is (integer? (get-in report [:log :entries])))))
+        log-dir (temp-dir)
+        runtime (runtime-with-loop
+                 dir
+                 "murakumo:gemma3:4b"
+                 (durable/new-loop "main-test-state"
+                                   {:session "main-test"}))]
+    (with-redefs-fn {#'main/env (fn [k]
+                                  (case k
+                                    "KC_LOCAL_LOG_DIR" (.getPath log-dir)
+                                    "KC_LOCAL_LOG" "true"
+                                    nil))}
+      (fn []
+        (let [report (#'main/state-report runtime)]
+          (is (= (.getPath (io/file dir)) (:root report)))
+          (is (= "murakumo:gemma3:4b" (:model report)))
+          (is (= {:loop-id "main-test-state"
+                  :session "main-test"
+                  :worker-id "local"
+                  :model "murakumo:gemma3:4b"}
+                 (:runtime report)))
+          (is (true? (:ready? report)))
+          (is (= :continue (get-in report [:budget :decision])))
+          (is (= {:action :run-task
+                  :reason :ready
+                  :command "clojure -M:run \"<task>\" <project-root> [model-id]"
+                  :interactive "<task>"}
+                 (:next-action report)))
+          (is (contains? report :doctor))
+          (is (contains? report :latest))
+          (is (= {:ticks 0
+                  :by-status {}
+                  :events {}
+                  :latest-run-summary nil
+                  :latest-tool-error nil
+                  :latest-error nil
+                  :latest-refusal nil
+                  :latest-control nil}
+                 (:metrics report)))
+          (is (= {:present? false
+                  :owner nil
+                  :current-owner "local"
+                  :expires-at nil
+                  :valid? false
+                  :stale? false
+                  :conflict? false
+                  :takeover? false}
+                 (:lease-status report)))
+          (is (integer? (get-in report [:log :entries]))))))))
 
 (deftest state-report-next-action-inspects-dirty-worktree-before-run
   (let [dir (temp-dir)
@@ -1661,21 +1679,60 @@
 (deftest interactive-command-errors-do-not-exit-loop
   (let [dir (temp-dir)
         runtime (runtime dir "murakumo:gemma3:4b")
+        session-state (atom {:label "kotoba-code" :history []})
         host {:git-status (fn []
                             (throw (ex-info "git unavailable token=abc123" {})))}]
     (let [out (with-out-str
                 (is (= :continue
-                       (#'main/run-interactive-command! runtime host ":status"))))]
+                       (#'main/run-interactive-command! runtime session-state host ":status"))))]
       (is (re-find #"ERROR: interactive command failed for \":status\"" out))
       (is (re-find #"git unavailable" out))
       (is (str/includes? out "[REDACTED]"))
       (is (not (re-find #"abc123" out)))))
   (let [dir (temp-dir)
-        runtime (runtime dir "murakumo:gemma3:4b")]
+        runtime (runtime dir "murakumo:gemma3:4b")
+        session-state (atom {:label "kotoba-code" :history []})]
     (let [out (with-out-str
                 (is (= :quit
-                       (#'main/run-interactive-command! runtime {} ":quit"))))]
+                       (#'main/run-interactive-command! runtime session-state {} ":quit"))))]
       (is (re-find #"bye" out)))))
+
+(deftest interactive-command-slash-prefixes-work-like-colon-prefixes
+  (let [dir (temp-dir)
+        runtime (runtime dir "murakumo:gemma3:4b")
+        session-state (atom {:label "kotoba-code" :history []})]
+    (let [out (with-out-str
+                (is (= :continue
+                       (#'main/run-interactive-command! runtime session-state {} "/help"))))]
+      (is (re-find #"Commands:" out))
+      (is (re-find #"Use /help or :help for commands" out)))
+    (is (= ":history-edn 10"
+           (#'main/normalize-interactive-line "/history-edn 10")))
+    (is (= ":quit"
+           (#'main/normalize-interactive-line ":quit")))))
+
+(deftest interactive-session-commands-cover-clear-compact-rename-and-context
+  (let [dir (temp-dir)
+        runtime-state (atom (runtime dir "murakumo:gemma3:4b"))
+        session-state (atom {:label "kotoba-code" :history []})]
+    (with-redefs-fn {#'main/run-once! (fn [& _] true)}
+      (fn []
+        (with-out-str
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/rename review-loop")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/config verbose=true")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/model murakumo:gemma3:9b")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/permissions allow=git_status")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/sandbox mode=restricted")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/context")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/compact focus on tests")))
+          (is (= :continue (#'main/run-interactive-command! runtime-state session-state {} "/clear restored-session"))))))
+    (is (= "murakumo:gemma3:9b" (:model-id @runtime-state)))
+    (is (= "restored-session" (:label @session-state)))
+    (is (= {"verbose" "true" "model" "murakumo:gemma3:9b"} (:config @session-state)))
+    (is (= {"allow" "git_status"} (:permissions @session-state)))
+    (is (= {"mode" "restricted"} (:sandbox @session-state)))
+    (is (= "restored-session" (:label @session-state)))
+    (is (empty? (:history @session-state)))))
 
 (deftest interactive-command-prefix-typos-do-not-run-control-or-model
   (let [dir (temp-dir)
@@ -1684,6 +1741,7 @@
                        :agent ::agent
                        :gate-rounds 1
                        :aborting (atom false))
+        session-state (atom {:label "kotoba-code" :history []})
         tasks (atom [])]
     (with-redefs-fn {#'main/run-once! (fn [_ task]
                                         (swap! tasks conj task)
@@ -1695,15 +1753,15 @@
 	      (fn []
 	        (let [out (with-out-str
 	                    (is (= :continue
-	                           (#'main/run-interactive-command! runtime {} ":stop-now")))
+	                           (#'main/run-interactive-command! runtime session-state {} ":stop-now")))
 	                    (is (= :continue
-	                           (#'main/run-interactive-command! runtime {} ":interrupting")))
+	                           (#'main/run-interactive-command! runtime session-state {} ":interrupting")))
 	                    (is (= :continue
-	                           (#'main/run-interactive-command! runtime {} ":reset-budgeted")))
+	                           (#'main/run-interactive-command! runtime session-state {} ":reset-budgeted")))
 	                    (is (= :continue
-	                           (#'main/run-interactive-command! runtime {} "--stop")))
+	                           (#'main/run-interactive-command! runtime session-state {} "--stop")))
 	                    (is (= :continue
-	                           (#'main/run-interactive-command! runtime {} "--histroy"))))]
+	                           (#'main/run-interactive-command! runtime session-state {} "--histroy"))))]
 	          (is (re-find #"unknown interactive command \":stop-now\"" out))
 	          (is (re-find #"Did you mean :stop\\?" out))
 	          (is (re-find #"unknown interactive command \":interrupting\"" out))

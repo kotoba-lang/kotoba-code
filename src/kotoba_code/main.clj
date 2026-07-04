@@ -36,7 +36,7 @@
 
   Model selection (model-neutral; pick the backend that fits):
     - OpenRouter (default): set OR_KEY; model-id e.g. z-ai/glm-5.2
-    - Murakumo gateway:     model-id starting with 'murakumo:' (no key; LiteLLM 127.0.0.1:4000)
+    - Murakumo gateway:     model-id starting with 'murakumo:' (murakumo.cloud internal inference gateway)
                             override with KC_MURAKUMO_URL
 
   Optional kotoba-Datom session persistence (resumable, as-of):
@@ -87,7 +87,7 @@
 
 (defn- murakumo-url []
   (or (not-empty (env "KC_MURAKUMO_URL"))
-      "http://127.0.0.1:4000/v1/chat/completions"))
+      "https://murakumo.cloud/api/v1/messages"))
 
 (defn- ensure-root! [root]
   (cond
@@ -227,10 +227,11 @@
   (let [env-max (numeric-env "KC_MAX_TOKENS" nil)]
     (cond
       (murakumo-model? model-id)
-      (model/openai-model (merge {:url (murakumo-url)
-                                  :model (subs model-id (count "murakumo:"))
-                                  :max-tokens (or env-max 8000) :http-fn host/http-fn}
-                                 host/json-caps))
+      (model/anthropic-model (merge {:url (murakumo-url)
+                                     :model (subs model-id (count "murakumo:"))
+                                     :max-tokens (or env-max 8000)
+                                     :http-fn host/http-fn}
+                                    host/json-caps))
       :else
       (model/openai-model (merge {:url "https://openrouter.ai/api/v1/chat/completions"
                                   :model (effective-model-id model-id)
@@ -811,7 +812,7 @@
                   " ["
                   (name kind)
                   "]")))
-  (println "Any other non-command input is treated as a coding task."))
+  (println "Use /help or :help for commands. /clear starts fresh, /compact summarizes, and /context or /usage shows session state. Any other non-command input is treated as a coding task."))
 
 (def ^:private tool-report
   (tools/tool-catalog))
@@ -1060,6 +1061,15 @@
 
 (def ^:private interactive-command-usage-lines
   {":help" "usage: :help"
+   ":clear" "usage: :clear [NAME]"
+   ":compact" "usage: :compact [INSTRUCTIONS]"
+   ":context" "usage: :context"
+   ":config" "usage: :config [KEY=VALUE]"
+   ":model" "usage: :model [MODEL]"
+   ":permissions" "usage: :permissions [RULE=VALUE]"
+   ":sandbox" "usage: :sandbox [KEY=VALUE]"
+   ":usage" "usage: :usage"
+   ":rename" "usage: :rename NAME"
    ":version" "usage: :version"
    ":version-edn" "usage: :version-edn"
    ":tools" "usage: :tools"
@@ -1088,6 +1098,7 @@
    ":status" "usage: :status"
    ":diff" "usage: :diff"
    ":test" "usage: :test"
+   ":exit" "usage: :exit"
    ":quit" "usage: :quit"})
 
 (defn- usage-for-interactive-command [command]
@@ -1097,8 +1108,26 @@
   (mapv #(assoc %
                 :usage (usage-for-interactive-command (:name %))
                 :suggestion (suggestion-policy (:name %)))
-        [{:name ":help" :aliases [":h"] :kind :help :args []
+        [{:name ":help" :aliases [":h" "/help"] :kind :help :args []
    :side-effect :read-only :matching :exact-token}
+   {:name ":clear" :aliases ["/clear" "/reset" "/new"] :kind :session :args ["name?"]
+    :side-effect :read-only :matching :exact-token}
+   {:name ":compact" :aliases ["/compact"] :kind :session :args ["instructions?"]
+    :side-effect :read-only :matching :exact-token}
+   {:name ":context" :aliases ["/context"] :kind :session :args []
+    :side-effect :read-only :matching :exact-token}
+   {:name ":config" :aliases ["/config"] :kind :session :args ["key=value?"]
+    :side-effect :read-only :matching :exact-token}
+   {:name ":model" :aliases ["/model"] :kind :session :args ["model?"]
+    :side-effect :read-only :matching :exact-token}
+   {:name ":permissions" :aliases ["/permissions"] :kind :session :args ["rule=value?"]
+    :side-effect :read-only :matching :exact-token}
+   {:name ":sandbox" :aliases ["/sandbox"] :kind :session :args ["key=value?"]
+    :side-effect :read-only :matching :exact-token}
+   {:name ":usage" :aliases ["/usage" "/stats"] :kind :session :args []
+    :side-effect :read-only :matching :exact-token}
+   {:name ":rename" :aliases ["/rename"] :kind :session :args ["name"]
+    :side-effect :read-only :matching :exact-token}
    {:name ":version" :kind :catalog :args []
     :side-effect :read-only :matching :exact-token}
    {:name ":version-edn" :kind :catalog :args []
@@ -1155,6 +1184,8 @@
     :side-effect :read-only :matching :exact-token}
    {:name ":test" :kind :verify :args []
     :side-effect :process :matching :exact-token}
+   {:name ":exit" :aliases [":quit" ":q" "/exit" "/quit"] :kind :exit :args []
+    :side-effect :exit :matching :exact-token}
    {:name ":quit" :aliases [":q"] :kind :exit :args []
     :side-effect :exit :matching :exact-token}]))
 
@@ -1476,7 +1507,7 @@
                :ok? credentials-ok?
                :detail (if openrouter?
                          (if credentials-ok? "OpenRouter key present" "missing OR_KEY/OPENROUTER_API_KEY")
-                         "local murakumo gateway selected")}
+                         "murakumo.cloud Anthropic gateway selected")}
               {:label "loop"
                :ok? loop-ok?
                :detail (str "status=" (name (:agent.loop/status loop))
@@ -1562,7 +1593,10 @@
         latest-tool-error (:latest-tool-error metrics)
         tool-errors (long (or (:tool-errors latest-run) 0))
         git-detail (:detail (check-by-label doctor "git"))
-        worktree-detail (not-empty (str/trim (or git-detail "")))]
+        worktree-detail (let [detail (str/trim (or git-detail ""))]
+                          (when (and (seq detail)
+                                     (not (str/starts-with? (str/lower-case detail) "error:")))
+                            detail))]
     (cond
       (not (check-ok? doctor "root"))
       {:action :fix-root
@@ -1965,6 +1999,13 @@
 (defn- interactive-command-token [line]
   (first (str/split (str/trim (or line "")) #"\s+" 2)))
 
+(defn- normalize-interactive-line [line]
+  (let [line* (str/trim (or line ""))]
+    (if (and (str/starts-with? line* "/")
+             (not (str/starts-with? line* "//")))
+      (str ":" (subs line* 1))
+      line*)))
+
 (defn- interactive-command? [line command]
   (= command (interactive-command-token line)))
 
@@ -1978,123 +2019,294 @@
                "unknown error")
            240))
 
-(defn- run-interactive-command! [runtime host line]
+(defn- update-session-history! [session-state line]
+  (swap! session-state update :history (fnil conj []) line))
+
+(defn- interactive-runtime [runtime-state]
+  (if (instance? clojure.lang.IAtom runtime-state)
+    @runtime-state
+    runtime-state))
+
+(defn- set-interactive-runtime-model! [runtime-state new-model-id]
+  (if (instance? clojure.lang.IAtom runtime-state)
+    (let [current @runtime-state
+          root (:root current)
+          loop-state (:loop-state current)
+          rebuilt (assoc (build-runtime root new-model-id)
+                         :loop-state loop-state)]
+      (reset! runtime-state rebuilt)
+      rebuilt)
+    runtime-state))
+
+(defn- session-label [session-state]
+  (or (:label @session-state) "kotoba-code"))
+
+(defn- set-session-label! [session-state label]
+  (swap! session-state assoc :label (str/trim (or label ""))))
+
+(defn- parse-key-value [s]
+  (when-let [[_ k v] (re-matches #"([^=]+)=(.*)" (str/trim (or s "")))]
+    [(str/lower-case (str/trim k)) (str/trim v)]))
+
+(defn- update-session-map! [session-state key-value]
+  (when-let [[k v] (parse-key-value key-value)]
+    (swap! session-state update k (fn [current]
+                                    (cond
+                                      (vector? current) (conj (vec current) v)
+                                      (map? current) (assoc current k v)
+                                      (nil? current) v
+                                      :else v)))
+    true))
+
+(defn- clear-session-context! [session-state label]
+  (swap! session-state
+         (fn [state]
+           (-> state
+               (assoc :history []
+                      :compact-summary nil)
+               (cond-> (not (str/blank? label))
+                 (assoc :label (str/trim label)))))))
+
+(defn- compact-session-context! [session-state instructions]
+  (let [summary (str "summary="
+                     (clipped (str/join " | " (take-last 5 (or (:history @session-state) []))) 180)
+                     (when (seq (str/trim (or instructions "")))
+                       (str " focus=" (clipped (str/trim instructions) 120))))]
+    (swap! session-state assoc
+           :history [summary]
+           :compact-summary summary)
+    summary))
+
+(defn- session-context-report [runtime session-state]
+  (let [state @session-state
+        history (or (:history state) [])
+        compact-summary (:compact-summary state)]
+    {:label (session-label session-state)
+     :history-count (count history)
+     :recent (vec (take-last 5 history))
+     :compact-summary compact-summary
+     :config (or (:config state) {})
+     :permissions (or (:permissions state) {})
+     :sandbox (or (:sandbox state) {})
+     :runtime {:model (:model-id runtime)
+               :session (:session runtime)
+               :loop-id (display-id (:agent.loop/id @(:loop-state runtime)))} }))
+
+(defn- session-usage-report [runtime session-state]
+  (merge (budget-report runtime)
+         {:session-label (session-label session-state)
+          :prompt-history-count (count (or (:history @session-state) []))
+          :compact-summary (:compact-summary @session-state)
+          :config (or (:config @session-state) {})
+          :permissions (or (:permissions @session-state) {})
+          :sandbox (or (:sandbox @session-state) {})}))
+
+(defn- run-interactive-command! [runtime-state session-state host line]
   (try
-    (cond
-      (or (= line ":quit") (= line ":q"))
-      (do (println "bye") :quit)
+    (let [line* (normalize-interactive-line line)
+          runtime (interactive-runtime runtime-state)]
+      (when-not (str/blank? line*)
+        (update-session-history! session-state line*))
+      (cond
+        (or (= line* ":quit") (= line* ":q"))
+        (do (println "bye") :quit)
 
-      (or (= line ":help") (= line ":h"))
-      (do (print-help!) :continue)
+        (or (= line* ":help") (= line* ":h"))
+        (do (print-help!) :continue)
 
-      (= line ":version")
-      (do (print-version!) :continue)
-
-      (= line ":version-edn")
-      (do (print-version-edn!) :continue)
-
-      (= line ":tools")
-      (do (print-tools!) :continue)
-
-      (= line ":tools-edn")
-      (do (print-tools-edn!) :continue)
-
-      (= line ":commands")
-      (do (print-interactive-commands-edn!) :continue)
-
-      (= line ":capabilities")
-      (do (print-capabilities-edn!) :continue)
-
-      (= line ":budget")
-      (do (print-budget! runtime) :continue)
-
-      (= line ":budget-edn")
-      (do (print-budget-edn! runtime) :continue)
-
-      (= line ":doctor")
-      (do (print-doctor! runtime) :continue)
-
-      (= line ":doctor-edn")
-      (do (print-doctor-edn! runtime) :continue)
-
-      (= line ":check")
-      (do (print-check! runtime) :continue)
-
-      (= line ":check-edn")
-      (do (print-check-edn! runtime) :continue)
-
-      (= line ":state")
-      (do (print-state-edn! runtime) :continue)
-
-      (= line ":next-action")
-      (do (print-next-action-edn! runtime) :continue)
-
-      (= line ":log")
-      (do (print-log! runtime) :continue)
-
-      (= line ":log-edn")
-      (do (print-log-edn! runtime) :continue)
-
-      (interactive-command? line ":history")
-      (do (print-interactive-history! runtime line 5) :continue)
-
-      (interactive-command? line ":history-edn")
-      (do (print-interactive-history-edn! runtime line 5) :continue)
-
-      (= line ":last")
-      (do (print-history! runtime 1) :continue)
-
-      (= line ":last-edn")
-      (do (print-last-edn! runtime) :continue)
-
-      (interactive-command? line ":interrupt")
-      (do (persist-control! runtime :interrupt (interactive-command-args line ":interrupt"))
+        (or (interactive-command? line* ":clear")
+            (interactive-command? line* ":reset")
+            (interactive-command? line* ":new"))
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (clear-session-context! session-state args)
+          (println (str "cleared session context"
+                        (when (seq (session-label session-state))
+                          (str " label=" (session-label session-state)))))
           :continue)
 
-      (= line ":resume")
-      (do (persist-control! runtime :resume nil)
+        (interactive-command? line* ":compact")
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (println (str "compacted context: "
+                        (compact-session-context! session-state args)))
           :continue)
 
-      (interactive-command? line ":reset-budget")
-      (do (persist-reset-budget! runtime (interactive-command-args line ":reset-budget"))
-          :continue)
+        (= line* ":context")
+        (do (prn (session-context-report runtime session-state))
+            :continue)
 
-      (interactive-command? line ":stop")
-      (do (persist-control! runtime :stop (interactive-command-args line ":stop"))
-          :continue)
+        (interactive-command? line* ":config")
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (if (str/blank? args)
+            (do (prn {:config (or (:config @session-state) {})
+                      :model (:model-id runtime)
+                      :session (:session runtime)})
+                :continue)
+            (if-let [[k v] (parse-key-value args)]
+              (do (swap! session-state update :config (fnil assoc {}) k v)
+                  (when (= k "model")
+                    (set-interactive-runtime-model! runtime-state v)
+                    (swap! session-state update :config assoc "model" v))
+                  (println (str "config " k "=" v))
+                  :continue)
+              (do (println "ERROR: :config expects KEY=VALUE")
+                  :continue))))
 
-      (interactive-command? line ":read")
-      (do (read-command! host line) :continue)
+        (interactive-command? line* ":model")
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (if (str/blank? args)
+            (do (println (str "model " (:model-id runtime))) :continue)
+            (do (set-interactive-runtime-model! runtime-state args)
+                (swap! session-state update :config assoc "model" args)
+                (println (str "model " (effective-model-id args)))
+                :continue)))
 
-      (= line ":status")
-      (do (println ((:git-status host))) :continue)
+        (interactive-command? line* ":permissions")
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (if (str/blank? args)
+            (do (prn {:permissions (or (:permissions @session-state) {})
+                      :model (:model-id runtime)})
+                :continue)
+            (if-let [[k v] (parse-key-value args)]
+              (do (swap! session-state update :permissions (fnil assoc {}) k v)
+                  (println (str "permissions " k "=" v))
+                  :continue)
+              (do (println "ERROR: :permissions expects RULE=VALUE")
+                  :continue))))
 
-      (= line ":diff")
-      (do (println ((:git-diff host))) :continue)
+        (interactive-command? line* ":sandbox")
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (if (str/blank? args)
+            (do (prn {:sandbox (or (:sandbox @session-state) {})
+                     :model (:model-id runtime)})
+                :continue)
+            (if-let [[k v] (parse-key-value args)]
+              (do (swap! session-state update :sandbox (fnil assoc {}) k v)
+                  (println (str "sandbox " k "=" v))
+                  :continue)
+              (do (println "ERROR: :sandbox expects KEY=VALUE")
+                  :continue))))
 
-      (= line ":test")
-      (do (println ((:run-tests host))) :continue)
+        (or (= line* ":usage") (= line* ":stats"))
+        (do (prn (session-usage-report runtime session-state))
+            :continue)
 
-      (str/blank? line)
-      :continue
+        (interactive-command? line* ":rename")
+        (let [args (str/trim (subs line* (count (interactive-command-token line*))))]
+          (if (str/blank? args)
+            (do (println "ERROR: :rename requires a session name")
+                :continue)
+            (do (set-session-label! session-state args)
+                (println (str "session renamed to " (session-label session-state)))
+                :continue)))
 
-      (str/starts-with? line ":")
-      (do (println (str "ERROR: unknown interactive command " (pr-str (interactive-command-token line))))
-          (when-let [suggestion (interactive-command-suggestion (interactive-command-token line))]
-            (println (str "Did you mean " suggestion "?")))
-          (println "Use :help to list commands.")
-          :continue)
+        (= line* ":version")
+        (do (print-version!) :continue)
 
-      (str/starts-with? line "-")
-      (do (println (str "ERROR: one-shot command is not valid inside interactive mode: "
-                        (pr-str (interactive-command-token line))))
-          (when-let [suggestion (command-suggestion (interactive-command-token line))]
-            (println (str "Did you mean " suggestion "?")))
-          (println "Use :help to list interactive commands, or run one-shot commands outside --interactive.")
-          :continue)
+        (= line* ":version-edn")
+        (do (print-version-edn!) :continue)
 
-      :else
-      (do (run-once! runtime line) :continue))
+        (= line* ":tools")
+        (do (print-tools!) :continue)
+
+        (= line* ":tools-edn")
+        (do (print-tools-edn!) :continue)
+
+        (= line* ":commands")
+        (do (print-interactive-commands-edn!) :continue)
+
+        (= line* ":capabilities")
+        (do (print-capabilities-edn!) :continue)
+
+        (= line* ":budget")
+        (do (print-budget! runtime) :continue)
+
+        (= line* ":budget-edn")
+        (do (print-budget-edn! runtime) :continue)
+
+        (= line* ":doctor")
+        (do (print-doctor! runtime) :continue)
+
+        (= line* ":doctor-edn")
+        (do (print-doctor-edn! runtime) :continue)
+
+        (= line* ":check")
+        (do (print-check! runtime) :continue)
+
+        (= line* ":check-edn")
+        (do (print-check-edn! runtime) :continue)
+
+        (= line* ":state")
+        (do (print-state-edn! runtime) :continue)
+
+        (= line* ":next-action")
+        (do (print-next-action-edn! runtime) :continue)
+
+        (= line* ":log")
+        (do (print-log! runtime) :continue)
+
+        (= line* ":log-edn")
+        (do (print-log-edn! runtime) :continue)
+
+        (interactive-command? line* ":history")
+        (do (print-interactive-history! runtime line* 5) :continue)
+
+        (interactive-command? line* ":history-edn")
+        (do (print-interactive-history-edn! runtime line* 5) :continue)
+
+        (= line* ":last")
+        (do (print-history! runtime 1) :continue)
+
+        (= line* ":last-edn")
+        (do (print-last-edn! runtime) :continue)
+
+        (interactive-command? line* ":interrupt")
+        (do (persist-control! runtime :interrupt (interactive-command-args line* ":interrupt"))
+            :continue)
+
+        (= line* ":resume")
+        (do (persist-control! runtime :resume nil)
+            :continue)
+
+        (interactive-command? line* ":reset-budget")
+        (do (persist-reset-budget! runtime (interactive-command-args line* ":reset-budget"))
+            :continue)
+
+        (interactive-command? line* ":stop")
+        (do (persist-control! runtime :stop (interactive-command-args line* ":stop"))
+            :continue)
+
+        (interactive-command? line* ":read")
+        (do (read-command! host line*) :continue)
+
+        (= line* ":status")
+        (do (println ((:git-status host))) :continue)
+
+        (= line* ":diff")
+        (do (println ((:git-diff host))) :continue)
+
+        (= line* ":test")
+        (do (println ((:run-tests host))) :continue)
+
+        (str/blank? line*)
+        :continue
+
+        (str/starts-with? line* ":")
+        (do (println (str "ERROR: unknown interactive command " (pr-str (interactive-command-token line*))))
+            (when-let [suggestion (interactive-command-suggestion (interactive-command-token line*))]
+              (println (str "Did you mean " suggestion "?")))
+            (println "Use :help to list commands.")
+            :continue)
+
+        (str/starts-with? line* "-")
+        (do (println (str "ERROR: one-shot command is not valid inside interactive mode: "
+                          (pr-str (interactive-command-token line*))))
+            (when-let [suggestion (command-suggestion (interactive-command-token line*))]
+              (println (str "Did you mean " suggestion "?")))
+            (println "Use :help to list interactive commands, or run one-shot commands outside --interactive.")
+            :continue)
+
+        :else
+        (do (run-once! runtime line*) :continue)))
     (catch Throwable e
       (println (str "ERROR: interactive command failed"
                     (when-not (str/blank? line) (str " for " (pr-str line)))
@@ -2255,18 +2467,25 @@
           green?))))))
 
 (defn- interactive! [root model-id]
-  (let [{:keys [host session checkpointer] :as runtime} (build-runtime root model-id)]
+  (let [runtime-state (atom (build-runtime root model-id))
+        {:keys [host session checkpointer]} @runtime-state
+        session-state (atom {:label "kotoba-code"
+                             :config {:model (effective-model-id model-id)}
+                             :permissions {}
+                             :sandbox {}
+                             :history []
+                             :compact-summary nil})]
     (println (str "-- kotoba-code interactive -- root=" root
                   " model=" (effective-model-id model-id)
                   (when checkpointer " kotoba-Datom=on")
                   " session=" (display-id session)))
-    (println "Enter a task. Commands: :help, :version, :tools, :budget, :doctor, :check, :state, :next-action, :log, :history, :last, :interrupt, :resume, :reset-budget, :stop, :read, :status, :diff, :test, :quit")
+    (println "Enter a task. Commands: /help, /clear, /compact, /context, /config, /model, /permissions, /sandbox, /usage, /rename, /version, /tools, /budget, /doctor, /check, /state, /next-action, /log, /history, /last, /interrupt, /resume, /reset-budget, /stop, /read, /status, /diff, /test, /exit")
     (loop []
-      (print "kotoba-code> ")
+      (print (str (session-label session-state) "> "))
       (flush)
-	      (when-let [line (read-line)]
-	        (when (= :continue (run-interactive-command! runtime host (str/trim line)))
-	          (recur))))))
+      (when-let [line (read-line)]
+        (when (= :continue (run-interactive-command! runtime-state session-state host (str/trim line)))
+          (recur))))))
 
 (def ^:private cli-max-args
   {"--help" 1
