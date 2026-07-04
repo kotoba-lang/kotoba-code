@@ -118,7 +118,7 @@
         pool (Executors/newSingleThreadExecutor)]
     (.createContext
      server
-     "/v1/chat/completions"
+     "/v1/messages"
      (reify com.sun.net.httpserver.HttpHandler
        (handle [_ exchange]
          (let [req (request-json exchange)
@@ -129,26 +129,20 @@
            (json-response
             exchange
             200
-            {:choices
-             [{:finish_reason (if tool-call? "tool_calls" "stop")
-               :message
-               (if tool-call?
-                 {:role "assistant"
-                  :content ""
-                  :tool_calls
-                  [{:id "call-replace"
-                    :type "function"
-                    :function
-                    {:name "replace_text"
-                     :arguments (json/write-str
-                                 {:path "src/demo/math.clj"
-                                  :old "  (- a b)"
-                                  :new "  (+ a b)"})}}]}
-                 {:role "assistant"
-                  :content "DONE"})}]})))))
+            {:content
+             (if tool-call?
+               [{:type "tool_use"
+                 :id "call-replace"
+                 :name "replace_text"
+                 :input {:path "src/demo/math.clj"
+                         :old "  (- a b)"
+                         :new "  (+ a b)"}}]
+               [{:type "text" :text "DONE"}])
+             :stop_reason (if tool-call? "tool_use" "end_turn")
+             :usage {:input_tokens 1 :output_tokens 1}})))))
     (.setExecutor server pool)
     (.start server)
-    {:url (str "http://127.0.0.1:" (.getPort (.getAddress server)) "/v1/chat/completions")
+    {:url (str "http://127.0.0.1:" (.getPort (.getAddress server)) "/v1/messages")
      :calls calls
      :stop (fn []
              (.stop server 0)
@@ -160,7 +154,7 @@
         pool (Executors/newCachedThreadPool)]
     (.createContext
      server
-     "/v1/chat/completions"
+     "/v1/messages"
      (reify com.sun.net.httpserver.HttpHandler
        (handle [_ exchange]
          (let [req (request-json exchange)
@@ -169,30 +163,26 @@
              (json-response
               exchange
               200
-              {:choices
-               [{:finish_reason "tool_calls"
-                 :message
-                 {:role "assistant"
-                  :content ""
-                  :tool_calls
-                  [{:id "call-replace-timeout"
-                    :type "function"
-                    :function
-                    {:name "replace_text"
-                     :arguments (json/write-str
-                                 {:path "src/demo/math.clj"
-                                  :old "  (- a b)"
-                                  :new "  (+ a b)"})}}]}}]})
+              {:content
+               [{:type "tool_use"
+                 :id "call-replace-timeout"
+                 :name "replace_text"
+                 :input {:path "src/demo/math.clj"
+                         :old "  (- a b)"
+                         :new "  (+ a b)"}}]
+               :stop_reason "tool_use"
+               :usage {:input_tokens 1 :output_tokens 1}})
              (do
                (Thread/sleep 5000)
                (json-response
                 exchange
                 200
-                {:choices [{:finish_reason "stop"
-                            :message {:role "assistant" :content "DONE"}}]})))))))
+                {:content [{:type "text" :text "DONE"}]
+                 :stop_reason "end_turn"
+                 :usage {:input_tokens 1 :output_tokens 1}})))))))
     (.setExecutor server pool)
     (.start server)
-    {:url (str "http://127.0.0.1:" (.getPort (.getAddress server)) "/v1/chat/completions")
+    {:url (str "http://127.0.0.1:" (.getPort (.getAddress server)) "/v1/messages")
      :calls calls
      :stop (fn []
              (.stop server 0)
@@ -554,7 +544,7 @@
     (is (str/includes? (:out capabilities-edn) ":default-model \"z-ai/glm-5.2\""))
     (is (str/includes? (:out capabilities-edn) ":tools [{:name \"read_file\", :kind :read, :description"))
     (is (str/includes? (:out capabilities-edn) ":usage \"usage: clojure -M:run --check-edn <project-root> [model-id]\""))
-    (is (str/includes? (:out capabilities-edn) ":interactive-commands [{:name \":help\", :aliases [\":h\"]"))
+    (is (str/includes? (:out capabilities-edn) ":interactive-commands [{:name \":help\", :aliases [\":h\" \"/help\"]"))
     (is (str/includes? (:out capabilities-edn) ":usage \"usage: :reset-budget [REASON]\""))
     (is (str/includes? (:out capabilities-edn) ":next-actions [{:action :run-task, :kind :ready"))
     (is (str/includes? (:out capabilities-edn) ":fields [:action :reason :command :interactive]"))

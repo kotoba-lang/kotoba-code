@@ -37,7 +37,7 @@ patch application, git rollback); `main.clj` is the CLI.
 `kotoba-code` itself does **not** call Ollama directly. The CLI currently chooses:
 
 - OpenRouter by default, through `langchain.model/openai-model`
-- Murakumo when the model id starts with `murakumo:`, through the local OpenAI-compatible gateway at `http://127.0.0.1:4000/v1/chat/completions`
+- Murakumo when the model id starts with `murakumo:`, through the murakumo.cloud internal inference gateway at `https://murakumo.cloud/api/v1/messages`
 
 Ollama can still sit behind an OpenAI-compatible gateway, but it is not a first-class
 dependency here. In this workspace the direct `ollama` mention is in the yukkuri
@@ -108,6 +108,10 @@ clojure -M:run "make the failing test pass" /path/to/project z-ai/glm-5.2
 # interactive terminal session
 clojure -M:run --interactive /path/to/project z-ai/glm-5.2
 
+# Claude Code-like launcher
+bin/claude
+bin/claude --interactive /path/to/project z-ai/glm-5.2
+
 # non-interactive diagnostics
 clojure -M:run --doctor /path/to/project z-ai/glm-5.2
 clojure -M:run --doctor-edn /path/to/project z-ai/glm-5.2
@@ -165,7 +169,7 @@ Durability knobs:
 - `KC_LOCAL_LOG=false` — disable the local supervisor log under `~/.kotoba-code/sessions`; readiness then requires kotoba-Datom persistence
 - `KC_TOOL_TRANSCRIPT=false` — hide the compact tool-call transcript after each task
 - `KC_LIVE_TOOLS=false` — hide live `[tool:start]` / `[tool:end]` progress lines
-- `KC_MURAKUMO_URL` — OpenAI-compatible Murakumo gateway URL, default `http://127.0.0.1:4000/v1/chat/completions`
+- `KC_MURAKUMO_URL` — Murakumo Anthropic gateway URL, default `https://murakumo.cloud/api/v1/messages`
 - `KC_HTTP_TIMEOUT_MS` — HTTP request timeout for model/kotoba calls, default `120000`
 - `KC_RUN_TIMEOUT_MS` — whole task timeout; on expiry partial edits are rolled back and a durable error tick is recorded
 - `KC_PROCESS_TIMEOUT_MS` — external process timeout for `run_tests`, `run_clojure`, `shell`, git status/diff, and patch application, default `120000`
@@ -280,7 +284,16 @@ returned immediately instead of burning the retry/backoff budget.
 
 Interactive commands:
 
-- `:help` — show terminal commands
+- `/help` or `:help` — show terminal commands
+- `/clear` or `:clear` — start fresh with empty local interactive context
+- `/compact` or `:compact` — summarize recent local interactive context
+- `/context` or `:context` — show what is currently in the local interactive context
+- `/config` or `:config` — show or set local session config values
+- `/model` or `:model` — show or switch the active session model
+- `/permissions` or `:permissions` — show or set local session permission state
+- `/sandbox` or `:sandbox` — show or set local session sandbox state
+- `/usage` or `:usage` — show the current budget and local interactive context summary
+- `/rename` or `:rename` — change the local interactive session label
 - `:version` — show kotoba-code version, compatibility schema, and default model
 - `:version-edn` — print the version probe as EDN
 - `:tools` — list the active agent tool names
@@ -309,7 +322,13 @@ Interactive commands:
 - `:status` — project-scoped `git status --short -- .`
 - `:diff` — project-scoped `git diff -- .`
 - `:test` — run the configured test command
+- `/exit` or `:exit` — exit
 - `:quit` — exit
+
+Interactive command input accepts either `:` or `/` prefixes for the command
+catalog above, so `/help`, `/status`, and `/read ...` behave the same as their
+`:` forms. Unknown commands still remain in the terminal loop instead of being
+sent to the model.
 
 Interactive command handlers are isolated per input. If an inspection/control
 command such as `:status`, `:diff`, `:test`, or `:read` throws unexpectedly,
@@ -427,7 +446,7 @@ launching a run.
 Each next-action catalog entry includes the expected `:fields` for that action,
 so wrappers can render recommendations without guessing optional payload keys.
 The interactive catalog marks commands as exact-token matches and reports that
-unknown `:`-prefixed input and dash-prefixed input are rejected while
+unknown `:`/`/`-prefixed input and dash-prefixed input are rejected while
 non-command input becomes an agent task.
 The command catalog marks each command with `:side-effect` (`:read-only`,
 `:process`, `:control-log-write`, or `:agent-run`) and declared `:exit-codes`.

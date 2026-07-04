@@ -1,0 +1,42 @@
+#!/usr/bin/env sh
+set -eu
+
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+  DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")" && pwd)"
+  TARGET="$(readlink "$SOURCE")"
+  case "$TARGET" in
+    /*) SOURCE="$TARGET" ;;
+    *) SOURCE="$DIR/$TARGET" ;;
+  esac
+done
+
+APP_DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")/.." && pwd)"
+cd "$APP_DIR"
+
+case "${1:-}" in
+  "" )
+    exec clojure -M:run --interactive "$(pwd)"
+    ;;
+  --help|-h)
+    exec clojure -M:run --help
+    ;;
+  --interactive)
+    shift
+    if [ $# -eq 0 ]; then
+      exec clojure -M:run --interactive "$(pwd)"
+    fi
+    exec clojure -M:run --interactive "$@"
+    ;;
+  --*)
+    exec clojure -M:run "$@"
+    ;;
+  *)
+    task="$1"
+    shift
+    if [ $# -eq 0 ]; then
+      exec clojure -M:run "$task" "$(pwd)"
+    fi
+    exec clojure -M:run "$task" "$@"
+    ;;
+esac
