@@ -15,4 +15,8 @@
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
   ;; drive a coding task:  clojure -M:run "<task>" <project-root> [model-id]
-  :run {:main-opts ["-m" "kotoba-code.main"]}}}
+  :run {:main-opts ["-m" "kotoba-code.main"]}
+  ;; clj-kondo as a Clojars lib (no Homebrew/system install needed).
+  :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.11.14"}}
+         :main-opts ["-m" "clj-kondo.main" "--lint" "src" "test"
+                     "--fail-level" "error"]}}}
