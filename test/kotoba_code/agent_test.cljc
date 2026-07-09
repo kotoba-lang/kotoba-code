@@ -298,3 +298,15 @@
   (is (gate/green? "Ran 1 tests containing 1 assertions.\n0 failures, 0 errors."))
   (is (not (gate/green? "Ran 1 tests containing 1 assertions.\n1 failures, 0 errors.")))
   (is (not (gate/green? nil))))
+
+(deftest green?-rejects-failure-counts-ending-in-zero
+  (is (not (gate/green? "Ran 40 tests containing 120 assertions.\n10 failures, 0 errors."))
+      "regression: green? used an unanchored `0 failures,\\s*0 errors` literal
+       substring match -- \"10 failures, 0 errors\" contains that exact
+       substring, so a genuinely RED suite with a failure count ending in
+       0 was misreported as green, silently disabling run-gated's rollback
+       safety net")
+  (is (not (gate/green? "Ran 400 tests.\n20 failures, 0 errors.")))
+  (is (not (gate/green? "Ran 4000 tests.\n100 failures, 0 errors.")))
+  (is (not (gate/green? "0 failures, 5 errors.")) "an all-zero-EXCEPT-errors count must also be red")
+  (is (gate/green? "0 failures, 0 error.") "singular \"error\" phrasing is still recognized"))
