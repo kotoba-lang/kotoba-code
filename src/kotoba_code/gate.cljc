@@ -5,9 +5,21 @@
   (:require [kotoba-code.agent :as agent]))
 
 (defn green?
-  "Whether a test-runner output reports a fully green suite."
+  "Whether a test-runner output reports a fully green suite. Captures the
+  failure/error COUNTS as digit groups and compares them to \"0\" exactly --
+  a literal \"0 failures,\\s*0 errors\" substring match (the previous
+  implementation) is unanchored, so it matches inside any larger count
+  ending in that digit sequence: \"10 failures, 0 errors\" contains the
+  substring \"0 failures, 0 errors\" and was misreported as green, silently
+  disabling the rollback safety net for any run that broke exactly 10, 20,
+  30, ... tests. Same exact-digit-group pattern qa-governor's
+  clojure-project collector already uses correctly for the same output
+  shape."
   [test-output]
-  (boolean (and test-output (re-find #"0 failures,\s*0 errors" test-output))))
+  (boolean
+   (when test-output
+     (when-let [[_ failures errors] (re-find #"(\d+) failures?,\s*(\d+) errors?" test-output)]
+       (and (= "0" failures) (= "0" errors))))))
 
 (defn- retry-task
   "Augment the task with the still-red test output so the next round can fix it.
