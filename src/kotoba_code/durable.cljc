@@ -198,7 +198,7 @@
                :or {ttl-ms 60000 action :interrupt}}]
   (let [tick (next-tick loop-state now-ms)
         lease (release-lease loop-state owner now-ms)
-        budget-exhausted? (some (fn [k] (<= (get (:agent.loop/budget loop-state) k 0)))
+        budget-exhausted? (some (fn [k] (<= (get (:agent.loop/budget loop-state) k 0) 0))
                                 [:tokens :tool-calls :rounds])
         loop-status (case action
                       :resume :active
