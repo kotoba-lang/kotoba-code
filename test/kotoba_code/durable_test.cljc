@@ -104,7 +104,17 @@
            (get-in interrupted [:events 0 :agent.event/payload])))
     (is (= :active (get-in resumed [:loop :agent.loop/status])))
     (is (= :continue (:decision resumed)))
-    (is (= 2 (get-in resumed [:tick :agent.tick/seq])))))
+    (is (= 2 (get-in resumed [:tick :agent.tick/seq])))
+    (is (= {:action :resume :reason nil :effective? true}
+           (get-in resumed [:events 0 :agent.event/payload]))
+        "regression: budget-exhausted? had a missing arg to <= (`(<= v)`
+         instead of `(<= v 0)`), a single-arg <= call which Clojure always
+         returns true for -- so a resume against a FRESH, full budget was
+         unconditionally reported as :effective? false :blocked-by
+         :budget-exhausted, even though the governor decision (:continue,
+         asserted above) correctly said the budget was fine. This exact
+         test already exercised the full-budget resume scenario but never
+         checked the payload, which is why the bug went unnoticed")))
 
 (deftest resume-does-not-hide-exhausted-budget
   (let [l0 (d/new-loop "loop-1" {:status :interrupted
