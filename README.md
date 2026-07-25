@@ -2,6 +2,19 @@
 
 A **model-neutral, test-gated, kotoba-Datom-backed** agentic coding agent — in Clojure.
 
+> **Not the fleet's runtime (2026-07-25).** `kotoba-lang/kotoba-fleet` used to
+> name a kotoba-code session as the production `run` for a leased work-unit.
+> The canonical runtime for fleet work is now the **nbb** sandbox agent
+> (`kotoba-fleet` → `hosts/nbb/fleet/sandbox_agent.cljs`), which runs contained
+> on a murakumo node — owner decision, and consistent with this workspace's
+> runtime priority (kotoba wasm → clojurewasm → ClojureScript → nbb, JVM last).
+>
+> This repo is **not retired and not rewritten**: the durable outer loop it
+> implements (ADR-2606280001 — lease, checkpoint, budget, governor tick, crash
+> recovery) is still the design both runtimes follow, and it is the JVM-side
+> implementation of it. Use it where a JVM toolchain is the point; do not wire
+> it in as the fleet's agent.
+
 Drive *any* OpenAI-compatible model (GLM/Kimi/Qwen via OpenRouter, or the Murakumo gateway)
 through a ReAct loop with `read_file` / `write_file` / `run_clojure` / `run_tests`
 tools, and persist every session's turn-history **as-of on the kotoba Datom log** so
