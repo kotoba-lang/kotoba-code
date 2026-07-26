@@ -1,0 +1,14 @@
+{
+  "name": "kotoba-code",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "tui": "nbb -m kotoba-code.ink-main",
+    "test:cljs": "nbb -m kotoba-code.ink-test"
+  },
+  "dependencies": {
+    "ink": "7.1.1",
+    "nbb": "1.4.206",
+    "react": "19.2.8"
+  }
+}

@@ -1,0 +1,58 @@
+#!/usr/bin/env sh
+set -eu
+
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+  DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")" && pwd)"
+  TARGET="$(readlink "$SOURCE")"
+  case "$TARGET" in
+    /*) SOURCE="$TARGET" ;;
+    *) SOURCE="$DIR/$TARGET" ;;
+  esac
+done
+
+APP_DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")/.." && pwd)"
+CALLER_DIR="${KC_PROJECT_ROOT:-$PWD}"
+cd "$APP_DIR"
+
+run_ink() {
+  PROJECT_ROOT="${1:-$CALLER_DIR}"
+  MODEL_ID="${2:-${KOTOBA_MODEL:-z-ai/glm-5.2}}"
+  export KOTOBA_CODE_HOME="$APP_DIR"
+  export KOTOBA_PROJECT_ROOT="$PROJECT_ROOT"
+  export KOTOBA_MODEL="$MODEL_ID"
+  exec "$APP_DIR/node_modules/.bin/nbb" -m kotoba-code.ink-main
+}
+
+case "${1:-}" in
+  "")
+    run_ink "$CALLER_DIR"
+    ;;
+  --tui)
+    shift
+    run_ink "${1:-$CALLER_DIR}" "${2:-${KOTOBA_MODEL:-z-ai/glm-5.2}}"
+    ;;
+  --interactive)
+    shift
+    exec clojure -M:run --interactive "${1:-$CALLER_DIR}" "${2:-${KOTOBA_MODEL:-z-ai/glm-5.2}}"
+    ;;
+  --codex)
+    shift
+    run_ink "${1:-$CALLER_DIR}" "codex:${2:-}"
+    ;;
+  --claude)
+    shift
+    run_ink "${1:-$CALLER_DIR}" "claude:${2:-sonnet}"
+    ;;
+  --*)
+    exec clojure -M:run "$@"
+    ;;
+  *)
+    TASK="$1"
+    shift
+    if [ "$#" -eq 0 ]; then
+      exec clojure -M:run "$TASK" "$CALLER_DIR"
+    fi
+    exec clojure -M:run "$TASK" "$@"
+    ;;
+esac
