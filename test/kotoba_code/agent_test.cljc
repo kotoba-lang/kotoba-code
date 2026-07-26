@@ -60,6 +60,16 @@
     (is (false? rolled-back?))
     (is (not (some #(= [:rollback] %) @(:calls host))) "no rollback on green")))
 
+(deftest conversation-skips-test-gate
+  (let [host (mock-host {:test-output "1 failures, 0 errors."})
+        a (agent/build-agent {:model (model/mock-model [(msg/ai "Hello!")])
+                              :host host})
+        {:keys [green? gate-skipped? answer]} (gate/run-gated a "hello" host {})]
+    (is (true? green?))
+    (is (true? gate-skipped?))
+    (is (= "Hello!" answer))
+    (is (not (some #(= [:test] %) @(:calls host))))))
+
 (deftest gate-rolls-back-when-suite-is-red
   (let [host  (mock-host {:test-output "Ran 2 tests containing 4 assertions.\n1 failures, 0 errors."})
         ;; model writes a (bad) file, then claims done

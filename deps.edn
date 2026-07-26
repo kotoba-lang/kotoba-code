@@ -7,7 +7,8 @@
                                          :sha "c7943d7542f28242a654ff3e0c37100b48a9417d"}
         io.github.kotoba-lang/langgraph {:git/url "https://github.com/kotoba-lang/langgraph.git"
                                          :sha "5b4e5e70837b849b14b6a5800894e3be202ad5fa"}
-        org.clojure/data.json {:mvn/version "2.5.0"}}
+        org.clojure/data.json {:mvn/version "2.5.0"}
+        org.jline/jline {:mvn/version "3.30.0"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
@@ -15,7 +16,8 @@
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
   ;; drive a coding task:  clojure -M:run "<task>" <project-root> [model-id]
-  :run {:main-opts ["-m" "kotoba-code.main"]}
+  :run {:jvm-opts ["--enable-native-access=ALL-UNNAMED"]
+        :main-opts ["-m" "kotoba-code.main"]}
   ;; clj-kondo as a Clojars lib (no Homebrew/system install needed).
   :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.11.14"}}
          :main-opts ["-m" "clj-kondo.main" "--lint" "src" "test"

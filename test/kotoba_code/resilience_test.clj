@@ -28,8 +28,14 @@
         m (r/retrying-model (flaky-model 99 (msg/ai "never") calls)
                             {:attempts 3 :backoff-ms 0})]
     (testing "persistent failure rethrows after :attempts tries"
-      (is (thrown? clojure.lang.ExceptionInfo
-                   (model/-generate m [(msg/user "hi")] {})))
+      (let [e (try
+                (model/-generate m [(msg/user "hi")] {})
+                nil
+                (catch clojure.lang.ExceptionInfo e e))]
+        (is (some? e))
+        (is (= 3 (:retry/attempts-used (ex-data e))))
+        (is (= 3 (:retry/attempts-limit (ex-data e))))
+        (is (true? (:retry/retryable? (ex-data e)))))
       (is (= 3 @calls) "tried exactly :attempts times"))))
 
 (deftest does-not-retry-non-transient-errors

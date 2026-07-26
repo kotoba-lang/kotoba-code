@@ -40,4 +40,11 @@
                (do (when on-retry (on-retry n (:err r)))
                    (when (pos? backoff-ms) (Thread/sleep (* (long backoff-ms) n)))
                    (recur (inc n)))
-               (throw (:err r))))))))))
+               (let [e ^Throwable (:err r)
+                     data (merge (or (ex-data e) {})
+                                 {:retry/attempts-used n
+                                  :retry/attempts-limit attempts
+                                  :retry/retryable? (boolean (retryable? e))})]
+                 (throw (ex-info (or (.getMessage e) "Model call failed")
+                                 data
+                                 e)))))))))))
