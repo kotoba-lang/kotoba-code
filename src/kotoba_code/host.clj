@@ -122,7 +122,15 @@
         (not (re-find #"(^|\s)~" command))
         (not (re-find #"(^|\s)(-L|--follow)(\s|$)" command))
         (some #(str/starts-with? command %)
+	      ;; nbb is the workspace's script host (CLAUDE.md; bb retired as a
+	      ;; script host by ADR-2607173000), so repos whose verification
+	      ;; entry points are .cljs could not be checked at all: an actor
+	      ;; asked to run its own integrity check got DENIED and stalled.
+	      ;; The guards above still apply — no metacharacters, no absolute
+	      ;; paths, no .. traversal — so this admits `nbb <script-in-repo>`
+	      ;; and nothing outside the project root.
 	      ["clojure -M:test" "clojure -X:test" "clj -M:test" "bb test"
+	       "nbb "
 	       "git status" "git diff" "git show" "rg " "ls" "pwd"
 	       "find ."]))))
 

@@ -277,6 +277,13 @@
     (is (re-find #"DENIED" ((:shell h) "sed -n 1,2p linked-secret.txt")))
     (is (re-find #"DENIED" ((:shell h) "rg -L SECRET .")))
     (is (re-find #"DENIED" ((:shell h) "rg --follow SECRET .")))
+    ;; nbb is allowlisted as a script host, but only for scripts reached by a
+    ;; relative path inside the project: the traversal, absolute-path and
+    ;; metacharacter guards still apply to it.
+    (is (re-find #"DENIED" ((:shell h) "nbb ../escape.cljs")))
+    (is (re-find #"DENIED" ((:shell h) "nbb /tmp/escape.cljs")))
+    (is (re-find #"DENIED" ((:shell h) "nbb x.cljs; rm -rf .")))
+    (is (string? ((:shell h) "nbb --version")))
     (is (string? ((:shell h) "pwd")))))
 
 (deftest git-tools-report-failures-as-tool-results
