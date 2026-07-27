@@ -573,7 +573,7 @@
     (is (str/includes? (:out capabilities-edn) "{:name \"--capabilities-edn\", :kind :catalog"))
     (is (str/includes? (:out capabilities-edn) ":exit-codes {:ok 0, :not-ready-or-not-green 1, :unexpected-failure 1, :usage-or-configuration-error 2}"))
     (is (str/includes? (:out capabilities-edn) ":exit-code-policy {:doctor {:commands [\"--doctor\" \"--doctor-edn\"], :ready 0, :not-ready 0"))
-    (is (str/includes? (:out capabilities-edn) ":agent-run {:commands [\"<task>\" \"--interactive\" \"--tui\"]"))
+    (is (str/includes? (:out capabilities-edn) ":agent-run {:commands [\"<task>\" \"--interactive\"]"))
     (is (str/includes? (:out capabilities-edn) ":verify {:commands [\"--test\"], :green 0, :not-green 1"))
     (is (str/includes? (:out capabilities-edn) ":check {:commands [\"--check\" \"--check-edn\"], :ready 0, :not-ready 1"))
     (is (str/includes? (:out capabilities-edn) ":limits {:tools {:max-write-bytes 200000"))
