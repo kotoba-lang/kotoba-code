@@ -41,6 +41,18 @@
          :rollback-error (ex-message e)}))
     {:rolled-back? false}))
 
+(def ^:private edit-tool-names
+  #{"write_file" "apply_patch" "replace_text" "replace_range"})
+
+(defn edited?
+  "Whether an agent result contains a project-mutating tool call."
+  [final]
+  (boolean
+   (some (fn [message]
+           (some #(contains? edit-tool-names (:name %))
+                 (:tool-calls message)))
+         (:messages final))))
+
 (defn run-gated
   "Run the agent on `task`, then enforce the gate against the host's own test run.
   If the suite is RED and `:rounds` > 1, the failure is fed back to the agent and it
@@ -52,10 +64,16 @@
   (try
     (loop [round 1
            cur   task]
-      (let [final    (agent/run-task agent-graph cur (select-keys opts [:session-id]))
-            test-out ((:run-tests host))
-            ok       (green? test-out)]
+      (let [final (agent/run-task agent-graph cur (select-keys opts [:session-id]))]
         (cond
+          (not (edited? final))
+          {:green? true :gate-skipped? true :test-out "" :final final
+           :answer (agent/answer final) :rounds round :rolled-back? false}
+
+          :else
+          (let [test-out ((:run-tests host))
+                ok (green? test-out)]
+            (cond
           ok
           {:green? true :test-out test-out :final final :answer (agent/answer final)
            :rounds round :rolled-back? false}
@@ -66,10 +84,11 @@
           :else
           (merge {:green? false :test-out test-out :final final
                   :answer (agent/answer final) :rounds round}
-                 (rollback-result host)))))
+                 (rollback-result host)))))))
     (catch #?(:clj Throwable :cljs :default) e
       (merge {:green?   false
               :error    (ex-message e)
+              :exception e
               :test-out ""
               :final    nil
               :answer   nil}

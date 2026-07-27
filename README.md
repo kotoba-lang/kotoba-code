@@ -1,19 +1,11 @@
 # kotoba-code
 
-A **model-neutral, test-gated, kotoba-Datom-backed** agentic coding agent — in Clojure.
+A **model-neutral, test-gated, kotoba-Datom-backed terminal coding agent** — in Clojure.
 
-> **Not the fleet's runtime (2026-07-25).** `kotoba-lang/kotoba-fleet` used to
-> name a kotoba-code session as the production `run` for a leased work-unit.
-> The canonical runtime for fleet work is now the **nbb** sandbox agent
-> (`kotoba-fleet` → `hosts/nbb/fleet/sandbox_agent.cljs`), which runs contained
-> on a murakumo node — owner decision, and consistent with this workspace's
-> runtime priority (kotoba wasm → clojurewasm → ClojureScript → nbb, JVM last).
->
-> This repo is **not retired and not rewritten**: the durable outer loop it
-> implements (ADR-2606280001 — lease, checkpoint, budget, governor tick, crash
-> recovery) is still the design both runtimes follow, and it is the JVM-side
-> implementation of it. Use it where a JVM toolchain is the point; do not wire
-> it in as the fleet's agent.
+It provides a full-screen terminal UI for human sessions, a stable line-mode
+interface for pipes, and one-shot/headless commands for scripts and CI. The TUI
+and headless surfaces share the same capability-confined tools, rollback gate,
+durable budget, leases, and resumable session log.
 
 Drive *any* OpenAI-compatible model (GLM/Kimi/Qwen via OpenRouter, or the Murakumo gateway)
 through a ReAct loop with `read_file` / `write_file` / `run_clojure` / `run_tests`
@@ -121,9 +113,52 @@ clojure -M:run "make the failing test pass" /path/to/project z-ai/glm-5.2
 # interactive terminal session
 clojure -M:run --interactive /path/to/project z-ai/glm-5.2
 
-# Claude Code-like launcher
-bin/claude
+# legacy JVM/JLine terminal UI
+clojure -M:run --tui /path/to/project z-ai/glm-5.2
+
+# product launcher: no arguments opens the ClojureScript/Ink TUI
+# (run npm install once after cloning)
+npm install
+bin/kotoba-code
+bin/kotoba-code --tui /path/to/project z-ai/glm-5.2
+bin/kotoba-code --interactive /path/to/project z-ai/glm-5.2 # legacy line mode
+
+# subscription-backed inference (uses each CLI's existing login; no API key)
+bin/kotoba-code --codex /path/to/project
+bin/kotoba-code --codex /path/to/project gpt-5.6-sol
+bin/kotoba-code --claude /path/to/project sonnet
+
+# equivalent model IDs, useful with KOTOBA_MODEL or one-shot runs
+clojure -M:run "inspect this project" /path/to/project codex:
+clojure -M:run "inspect this project" /path/to/project claude:sonnet
+
+# legacy compatibility launcher
 bin/claude --interactive /path/to/project z-ai/glm-5.2
+
+# The Ink UI owns the terminal while a turn is running, so tool events and
+# streamed input cannot corrupt the composer. Ctrl-C cancels the active turn.
+
+### Ink slash commands
+
+- `/help` — show the command catalog
+- `/clear` — clear visible conversation output
+- `/resume` — resume an interrupted durable loop
+- `/status` — show the working-tree status
+- `/doctor` — run readiness diagnostics
+- `/loop [resume|stop|reset]` — inspect or control the durable supervisor loop
+- `/subtask <task>` — start an independent read-only background agent
+- `/subtask --write <task>` — edit inside an isolated git worktree
+- `/agents` — list background agents
+- `/agents <id>` — show a background agent result
+- `/agents cancel <id>` — cancel a running background agent
+- `/agents diff <id>` — inspect an isolated agent patch
+- `/agents apply <id>` — check and apply its patch to the parent workspace
+- `/agents cleanup <id>` — remove its completed worktree and any unapplied changes
+- `/model [model-id]` — show or change the active model
+- `/codex [model]` — switch to the Codex subscription backend
+- `/claude [model]` — switch to the Claude subscription backend
+- `/openrouter [model]` — switch to OpenRouter
+- `/exit` — exit the TUI
 
 # non-interactive diagnostics
 clojure -M:run --doctor /path/to/project z-ai/glm-5.2
@@ -187,6 +222,14 @@ Durability knobs:
 - `KC_RUN_TIMEOUT_MS` — whole task timeout; on expiry partial edits are rolled back and a durable error tick is recorded
 - `KC_PROCESS_TIMEOUT_MS` — external process timeout for `run_tests`, `run_clojure`, `shell`, git status/diff, and patch application, default `120000`
 - `KC_MODEL_RETRY_ATTEMPTS` / `KC_MODEL_RETRY_BACKOFF_MS` — transient model/API retry budget, defaults `4` and `1500`
+- `KC_MAX_TOKENS` — per-response output limit. OpenRouter defaults to `2048`
+- `KC_CREDIT_FALLBACK_MODEL` — model used when OpenRouter returns HTTP 402.
+  Defaults to the tool-capable `cohere/north-mini-code:free`; set another
+  available model explicitly if OpenRouter availability changes.
+- `KC_SUBSCRIPTION_TIMEOUT_MS` — timeout for each `codex exec` or `claude -p`
+  inference round. Defaults to `300000` (5 minutes).
+  so small conversations are not rejected by reserving an unnecessarily large
+  completion budget; raise it explicitly for unusually large generated files.
 
 Numeric `KC_*` values, boolean toggles (`true` / `false`), and
 `KC_MURAKUMO_URL` are validated before task execution.

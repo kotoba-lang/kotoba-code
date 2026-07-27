@@ -2,6 +2,7 @@
 .clj-kondo/
 .lsp/
 /target/
+/node_modules/
 **/.cpcache/
 *.log
 /.compare-openrouter/
