@@ -37,6 +37,21 @@ patch application, git rollback); `main.clj` is the CLI.
 - kotoba persistence is `datomic-checkpointer` with `:db-api (kdb/kotoba-api …)`, never the in-process demo store.
 - stop the moment tests are green; no speculative edits after green.
 
+## Choosing a model for a job
+
+kotoba-code is model-neutral, so "which model" is a measurement, not a setting.
+Two harnesses live in `scripts/`, and they answer different questions:
+
+| harness | question | gate |
+|---|---|---|
+| `compare-openrouter-models.sh` | can this model write **Clojure**? | `clojure -M:test` on a synthetic fixture |
+| [`scripts/orbench`](scripts/orbench/README.md) | can this model write **Kotoba**? | the Kotoba compiler — inspect / test on jvm-kir+js+wasm / aarch64 native |
+
+orbench holds out real landed ports from `kotoba-lang/murakumo` as its oracle,
+feeds real compiler diagnostics back as an agent loop, and separates *could not
+measure* (rate-limited, truncated) from *measured and wrong*. Findings and the
+2026-08 free-model results are in ADR-2800004600 (`com-junkawasaki/root`).
+
 ## Inference backend status
 
 `kotoba-code` itself does **not** call Ollama directly. The CLI currently chooses:
