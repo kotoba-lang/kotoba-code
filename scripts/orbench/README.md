@@ -39,6 +39,7 @@ npx --no-install nbb bench.cljs agent 3 200 6 \
   poolside/laguna-s-2.1:free nvidia/nemotron-3-super-120b-a12b:free
 npx --no-install nbb bench.cljs report           # correctness, speed, cost
 npx --no-install nbb bench.cljs quality          # duplicated truth, fuel/call
+npx --no-install nbb bench.cljs mutate t2-prices work/....kotoba  # holes in the battery
 ```
 
 The key is read from `$OPENROUTER_API_KEY`, else from the kagi item
@@ -51,6 +52,28 @@ The key is read from `$OPENROUTER_API_KEY`, else from the kagi item
 | `ORBENCH_FIXTURES` | repo the `:reference` paths resolve against (default `kotoba-lang/murakumo`) |
 | `ORBENCH_MAX_TOKENS` | per-reply ceiling (default 16000) — **see below** |
 | `ORBENCH_DIR` | where `tasks.edn` / `results.edn` live (default cwd) |
+
+## `mutate` — for ports that have no reference
+
+`validate` needs a landed reference to mutate. Real work does not have one: you
+are writing the port precisely because it does not exist yet. There the battery's
+discriminating power has to be checked against the *candidate*, and doing that by
+hand does not survive contact with a long session — in one day it was done three
+times from memory, and once the hand-applied edit silently failed to match, so a
+green run read as "the battery is blind" when nothing had been mutated at all.
+
+```bash
+npx --no-install nbb bench.cljs mutate <task-id> path/to/port.kotoba
+```
+
+Each mutation is one token — a string literal off by a character, an integer off
+by one, a comparison weakened, `and`/`or` swapped. Every one is checked to have
+actually changed the file before it counts; a mutation that did not apply is
+reported as `could not be applied`, never as a kill. Surviving mutants are
+printed as `HOLE:` — those are the literals and operators your battery does not
+constrain.
+
+Run it on the file you are about to commit, not on the reference.
 
 ## Run `validate` before you believe a number
 
