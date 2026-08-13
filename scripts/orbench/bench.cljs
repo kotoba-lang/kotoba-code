@@ -590,6 +590,81 @@
                         "—")
                       " |"))))))
 
+
+;; ── mutate: does the battery notice when the answer is wrong? ───────────
+;;
+;; `validate` can only run where a landed reference exists. Real ports have no
+;; reference — and there the battery's discriminating power was being checked by
+;; hand, three times in one day. Once the hand-applied mutation silently failed
+;; to match and the green run read as "the battery does not discriminate", which
+;; is the same shape as every other defect in this file: a check that could not
+;; run, reporting the same value as a check that ran and found nothing.
+;;
+;; So: apply each mutation, ASSERT THE FILE ACTUALLY CHANGED, then run the
+;; battery. A surviving mutant is a hole in the battery, not a passing grade.
+
+(defn mutations
+  "One-token edits, each targeting a different way the port can be wrong."
+  [src]
+  (concat
+   ;; every string literal, made wrong by one character
+   (for [[whole lit] (distinct (re-seq #"\"([^\"\n]{1,60})\"" src))
+         :when (seq lit)]
+     {:label (str "string " (pr-str lit) " -> " (pr-str (str lit "X")))
+      :from whole :to (str "\"" lit "X\"")})
+   ;; every integer literal, off by one
+   (for [[whole n] (distinct (re-seq #"(?:\s|\()(-?\d+)(?:\s|\))" src))
+         :let [t (str/replace whole n (str (inc (js/parseInt n))))]]
+     {:label (str "integer " n " -> " (inc (js/parseInt n)))
+      :from whole :to t})
+   ;; comparison and boolean operators, weakened or flipped
+   (for [[from to] [["(> " "(>= "] ["(< " "(<= "] ["(>= " "(> "] ["(<= " "(< "]
+                    ["(and " "(or "] ["(or " "(and "] ["(not " "(identity "]]
+         :when (str/includes? src from)]
+     {:label (str "operator " (str/trim from) " -> " (str/trim to))
+      :from from :to to})))
+
+(defn mutate
+  "Mutation-test one .kotoba file against a task's battery."
+  [task-id path]
+  (let [t (first (filter #(= (keyword task-id) (:id %)) tasks))
+        _ (when-not t (throw (js/Error. (str "no task " task-id " in tasks.edn"))))
+        src (fs/readFileSync path "utf8")
+        base (quick-grade (assoc t :id (str (name (:id t)) "-mutbase")) src)]
+    (when-not (and (:compiles base) (true? (:tests-ok base)))
+      (throw (js/Error. "the unmutated file is not green — fix that before mutating")))
+    (println "baseline: green\n")
+    (let [results
+          (doall
+           (for [[i m] (map-indexed vector (mutations src))
+                 :let [mutated (str/replace-first src (:from m) (:to m))]]
+             (if (= mutated src)
+               ;; A backstop, not an expected path: every mutation above is
+               ;; derived from the file's own text, so a no-op means the
+               ;; generator is broken. It is reported rather than counted
+               ;; because the alternative — counting it as a kill — is exactly
+               ;; the failure this command exists to prevent.
+               {:label (:label m) :outcome :not-applied}
+               (let [g (quick-grade (assoc t :id (str (name (:id t)) "-mut" i)) mutated)
+                     killed? (not (and (:compiles g) (true? (:tests-ok g))))]
+                 (println (if killed? "  killed  " "  SURVIVED") (:label m))
+                 {:label (:label m)
+                  :outcome (if killed? :killed :survived)
+                  :by (if (:compiles g) (:failed g) [(str (:diag g))])}))))
+          survived (filter #(= :survived (:outcome %)) results)
+          skipped (filter #(= :not-applied (:outcome %)) results)]
+      (println (str "\n" (count results) " mutants, "
+                    (count (filter #(= :killed (:outcome %)) results)) " killed, "
+                    (count survived) " survived, "
+                    (count skipped) " could not be applied"))
+      (when (seq skipped)
+        (println "!! mutations that did not change the file are NOT evidence of anything:")
+        (doseq [m skipped] (println "   " (:label m))))
+      (doseq [m survived]
+        (println "HOLE:" (:label m) "— the battery cannot see this"))
+      (when (and (empty? survived) (empty? skipped))
+        (println "every mutant died: the battery constrains every literal and operator in the file")))))
+
 (case (first argv)
   "validate" (validate)
   "models" (-> (js/fetch "https://openrouter.ai/api/v1/models")
@@ -599,6 +674,7 @@
                         (println "wrote" (path/join here "or-models.json")))))
   "feedback" (feedback-demo)
   "quality" (quality)
+  "mutate" (mutate (second argv) (nth argv 2))
   "quota" (quota)
   "report" (report)
   "agent" (run-agent (drop 4 argv)
@@ -606,4 +682,5 @@
                      (js/parseInt (nth argv 2))
                      (js/parseInt (nth argv 3)))
   (println "usage: bench.cljs validate | models | feedback | quality | quota | report"
+           "| mutate <task-id> <file.kotoba>"
            "| agent <max-rounds> <request-budget> <concurrency> <model> ..."))
