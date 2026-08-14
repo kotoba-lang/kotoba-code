@@ -334,16 +334,52 @@
     (swap! next-slot (fn [prev] (let [s (max prev now)] (reset! mine s) (+ s spacing))))
     (sleep (max 0 (- @mine (js/Date.now))))))
 
+(defn sse->completion
+  "Fold an SSE stream back into the one non-streaming shape the rest of this
+  file expects.
+
+  Streaming is not a preference here. `infer.murakumo.cloud` sits behind
+  Cloudflare, which cuts a response that takes over 100s with a 524 — and a
+  reasoning model asked to port a namespace takes longer than that. Measured:
+  both benchmark tasks came back 524 with zero rounds, so the model's ability
+  was never even sampled.
+
+  `reasoning_content` deltas are DROPPED. They are not the answer, and keeping
+  them would let `extract` pull a code block out of the model's thinking."
+  [raw]
+  (let [chunks (->> (str/split-lines raw)
+                    (keep #(when (str/starts-with? % "data: ") (subs % 6)))
+                    (remove #(= "[DONE]" (str/trim %)))
+                    (keep #(try (js/JSON.parse %) (catch :default _ nil))))
+        content (->> chunks
+                     (keep #(some-> % .-choices (aget 0) .-delta .-content))
+                     (str/join ""))
+        finish (->> chunks
+                    (keep #(some-> % .-choices (aget 0) .-finish_reason))
+                    last)
+        usage (some #(some-> % .-usage) (reverse chunks))]
+    (js/JSON.stringify
+     (clj->js {:choices [{:message {:content content} :finish_reason finish}]
+               :usage (if usage (js->clj usage :keywordize-keys true) {})}))))
+
 (defn call-once [model msgs]
   (let [t0 (js/Date.now)]
-    (-> (js/fetch "https://openrouter.ai/api/v1/chat/completions"
+    (-> (js/fetch (or js/process.env.ORBENCH_ENDPOINT
+                      "https://openrouter.ai/api/v1/chat/completions")
                   #js {:method "POST"
-                       :headers #js {"Authorization" (str "Bearer " (api-key))
-                                     "Content-Type" "application/json"
-                                     "HTTP-Referer" "https://junkawasaki.com"
-                                     "X-Title" "orbench clj->kotoba"}
+                       :headers (if js/process.env.ORBENCH_ENDPOINT
+                                  ;; a self-hosted OpenAI-compatible endpoint
+                                  ;; (murakumo) takes no bearer token
+                                  #js {"Content-Type" "application/json"}
+                                  #js {"Authorization" (str "Bearer " (api-key))
+                                       "Content-Type" "application/json"
+                                       "HTTP-Referer" "https://junkawasaki.com"
+                                       "X-Title" "orbench clj->kotoba"})
                        :body (js/JSON.stringify
                               (clj->js {:model model
+                                        ;; see sse->completion: Cloudflare 524s
+                                        ;; a >100s non-streaming reply
+                                        :stream (boolean js/process.env.ORBENCH_ENDPOINT)
                                         :temperature 0
                                         ;; Reasoning tokens are billed against
                                         ;; this too. At 4000, then again at
@@ -358,14 +394,18 @@
                                         :messages msgs}))})
         (.then (fn [r]
                  (-> (.text r)
-                     (.then (fn [body]
-                              {:status (.-status r)
-                               :ms (- (js/Date.now) t0)
-                               :headers (into {} (for [k ["x-ratelimit-limit" "x-ratelimit-remaining"
-                                                          "x-ratelimit-reset" "retry-after"]
-                                                       :let [v (.get (.-headers r) k)]
-                                                       :when v] [k v]))
-                               :body body})))))
+                     (.then (fn [raw]
+                              (let [body (if (and js/process.env.ORBENCH_ENDPOINT
+                                                  (str/includes? raw "data:"))
+                                           (sse->completion raw)
+                                           raw)]
+                                {:status (.-status r)
+                                 :ms (- (js/Date.now) t0)
+                                 :headers (into {} (for [k ["x-ratelimit-limit" "x-ratelimit-remaining"
+                                                            "x-ratelimit-reset" "retry-after"]
+                                                         :let [v (.get (.-headers r) k)]
+                                                         :when v] [k v]))
+                                 :body body}))))))
         (.catch (fn [e] {:status 0 :ms (- (js/Date.now) t0) :error (.-message e)})))))
 
 (defn call-model
