@@ -105,6 +105,32 @@ failure. They are the reason the code is shaped the way it is
   `inspect` can, so the interface check is part of the green condition — not a
   column printed afterwards.
 
+## Self-hosted endpoints: `ORBENCH_ENDPOINT`
+
+```bash
+ORBENCH_ENDPOINT=https://infer.murakumo.cloud/v1/chat/completions \
+  npx --no-install nbb bench.cljs agent 4 30 1 murakumo-main
+```
+
+Any OpenAI-compatible endpoint. No bearer token is sent, and the model id is
+passed through — resolve it via the `murakumo-main` alias rather than naming a
+concrete model (ADR-2607173100).
+
+**Requests to such an endpoint stream, and that is not a preference.**
+`infer.murakumo.cloud` sits behind Cloudflare, whose proxy cuts a non-streaming
+response at 100 seconds with a `524`. A reasoning model asked to port a
+namespace takes longer than that. Measured 2026-08-13:
+
+| | outcome |
+|---|---|
+| non-streaming | both benchmark tasks `HTTP 524`, **0 rounds** — the model's ability was never sampled |
+| streaming | rounds of 210 s, 260 s, 260 s all completed, no 524 |
+
+`sse->completion` folds the event stream back into the one non-streaming shape
+the rest of the harness expects, and **drops `reasoning_content` deltas** — they
+are not the answer, and keeping them lets `extract` pull a code block out of the
+model's thinking.
+
 ## Why `quality` reports charges, not nanoseconds
 
 A Kotoba js artifact carries `let fuel=512` per instantiation. A hot loop dies
