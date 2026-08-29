@@ -5,7 +5,7 @@
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.string :as str]
-            [clojure.data.json :as json])
+            [json.data-json :as json])
   (:import [java.net.http HttpClient HttpRequest HttpRequest$BodyPublishers
             HttpResponse$BodyHandlers]
            [java.net URI]

@@ -1,5 +1,5 @@
 (ns kotoba-code.cli-test
-  (:require [clojure.data.json :as json]
+  (:require [json.data-json :as json]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
