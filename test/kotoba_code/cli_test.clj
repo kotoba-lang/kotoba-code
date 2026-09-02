@@ -47,7 +47,7 @@
 
 (defn- run-cli [args & {:keys [env timeout-ms stdin]
                         :or {timeout-ms 20000}}]
-  (let [pb (ProcessBuilder. ^java.util.List (vec (concat ["clojure" "-M:run"] args)))
+  (let [pb (ProcessBuilder. ^java.util.List (vec (concat ["clojure" "-M" "-m" "kotoba-code.main"] args)))
         env-map (.environment pb)]
     (doseq [k ["OR_KEY" "OPENROUTER_API_KEY"
                "KOTOBA_URL" "KOTOBA_GRAPH" "KOTOBA_TOKEN"
@@ -473,11 +473,11 @@
                                         "KC_TEST_CMD"
                                         "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""))]
     (is (= 0 (:exit help)) (str (:out help) (:err help)))
-    (is (str/includes? (:out help) "usage: clojure -M:run \"<task>\" <project-root> [model-id]"))
-    (is (str/includes? (:out help) "or: usage: clojure -M:run --interactive <project-root> [model-id]"))
-    (is (str/includes? (:out help) "or: usage: clojure -M:run --version-edn"))
-    (is (str/includes? (:out help) "or: usage: clojure -M:run --capabilities-edn"))
-    (is (str/includes? (:out help) "or: usage: clojure -M:run --stop <project-root> [model-id] [reason]"))
+    (is (str/includes? (:out help) "usage: clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"))
+    (is (str/includes? (:out help) "or: usage: clojure -M -m kotoba-code.main --interactive <project-root> [model-id]"))
+    (is (str/includes? (:out help) "or: usage: clojure -M -m kotoba-code.main --version-edn"))
+    (is (str/includes? (:out help) "or: usage: clojure -M -m kotoba-code.main --capabilities-edn"))
+    (is (str/includes? (:out help) "or: usage: clojure -M -m kotoba-code.main --stop <project-root> [model-id] [reason]"))
     (is (= 0 (:exit short-help)) (str (:out short-help) (:err short-help)))
     (is (= (:out help) (:out short-help)))
     (is (= 0 (:exit version)) (str (:out version) (:err version)))
@@ -512,9 +512,9 @@
     (is (str/includes? (:out commands-edn) ":kind :control"))
     (is (str/includes? (:out commands-edn) "{:name \"--commands-edn\", :kind :catalog, :args [], :machine-readable? true"))
     (is (str/includes? (:out commands-edn) "{:name \"--interactive-commands-edn\", :kind :catalog, :args [], :machine-readable? true"))
-    (is (str/includes? (:out commands-edn) ":usage \"usage: clojure -M:run --interactive <project-root> [model-id]\""))
+    (is (str/includes? (:out commands-edn) ":usage \"usage: clojure -M -m kotoba-code.main --interactive <project-root> [model-id]\""))
     (is (str/includes? (:out commands-edn) ":suggestion {:enabled? true, :max-distance 4, :prefix \"--\", :prefix-isolated? true}"))
-    (is (str/includes? (:out commands-edn) ":usage \"usage: clojure -M:run --stop <project-root> [model-id] [reason]\""))
+    (is (str/includes? (:out commands-edn) ":usage \"usage: clojure -M -m kotoba-code.main --stop <project-root> [model-id] [reason]\""))
     (is (str/includes? (:out commands-edn) ":side-effect :control-log-write"))
     (is (str/includes? (:out commands-edn) ":exit-codes [0 1 2]"))
     (is (= 0 (:exit interactive-commands-edn)) (str (:out interactive-commands-edn) (:err interactive-commands-edn)))
@@ -543,7 +543,7 @@
     (is (str/includes? (:out capabilities-edn) ":version \"dev\""))
     (is (str/includes? (:out capabilities-edn) ":default-model \"z-ai/glm-5.2\""))
     (is (str/includes? (:out capabilities-edn) ":tools [{:name \"read_file\", :kind :read, :description"))
-    (is (str/includes? (:out capabilities-edn) ":usage \"usage: clojure -M:run --check-edn <project-root> [model-id]\""))
+    (is (str/includes? (:out capabilities-edn) ":usage \"usage: clojure -M -m kotoba-code.main --check-edn <project-root> [model-id]\""))
     (is (str/includes? (:out capabilities-edn) ":interactive-commands [{:name \":help\", :aliases [\":h\" \"/help\"]"))
     (is (str/includes? (:out capabilities-edn) ":usage \"usage: :reset-budget [REASON]\""))
     (is (str/includes? (:out capabilities-edn) ":next-actions [{:action :run-task, :kind :ready"))
@@ -604,7 +604,7 @@
     (is (str/includes? (:out read) "1 | (ns demo.math)"))
     (is (str/includes? (:out read) "2 | (defn add [a b]"))
     (is (= 2 (:exit read-missing-path)) (str (:out read-missing-path) (:err read-missing-path)))
-    (is (str/includes? (:out read-missing-path) "usage: clojure -M:run --read <project-root> <path> [start] [end]"))
+    (is (str/includes? (:out read-missing-path) "usage: clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]"))
     (is (= 2 (:exit read-bad-start)) (str (:out read-bad-start) (:err read-bad-start)))
     (is (str/includes? (:out read-bad-start) "start line must be an integer: nope"))
     (is (= 2 (:exit read-bad-range)) (str (:out read-bad-range) (:err read-bad-range)))

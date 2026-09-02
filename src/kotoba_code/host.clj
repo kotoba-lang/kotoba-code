@@ -1,5 +1,8 @@
 (ns kotoba-code.host
-  "JVM host capabilities — the real I/O behind the injected tool/model seams.
+  "Leftover JVM host I/O (HTTP, fs, git) — host-listen HOLD, not operator start.
+  Do not wrap Datalevin/LMDB JNI or --enable-native-access leftovers as a C .so.
+
+  JVM host capabilities — the real I/O behind the injected tool/model seams.
   Filesystem access is sandboxed to a project root (+ optional read roots); writes
   are recorded so a failed gate can roll the working tree back via git."
   (:require [clojure.java.io :as io]

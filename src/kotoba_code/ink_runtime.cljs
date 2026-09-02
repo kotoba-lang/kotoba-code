@@ -1,4 +1,6 @@
 (ns kotoba-code.ink-runtime
+  "Leftover nbb Ink host-listen HOLD — not operator start.
+  :run is gone. Do not wrap Datalevin/LMDB JNI as a C .so."
   (:require [clojure.string :as str]
             ["node:child_process" :refer [spawn]]
             ["node:fs" :as fs]
@@ -62,7 +64,8 @@
 
 (defn start-turn!
   [{:keys [app-dir root model text emit! on-exit!]}]
-  (let [args (cond-> ["-M:run" text root] model (conj model))
+  ;; Leftover nbb host-listen (not operator start). :run is gone.
+  (let [args (cond-> ["-M" "-m" "kotoba-code.main" text root] model (conj model))
         child (spawn "clojure" (clj->js args)
                      #js {:cwd app-dir
                           :env (js/Object.assign
@@ -108,7 +111,7 @@
 
 (defn start-control!
   [{:keys [app-dir root action emit! on-exit!]}]
-  (let [child (spawn "clojure" #js ["-M:run" action root]
+  (let [child (spawn "clojure" #js ["-M" "-m" "kotoba-code.main" action root]
                      #js {:cwd app-dir :env js/process.env})]
     (.on child "close"
          (fn [code _]
@@ -122,7 +125,7 @@
 (defn start-command!
   "Run a read-only JVM CLI command and return its rendered output to the UI."
   [{:keys [app-dir args emit! on-exit!]}]
-  (let [child (spawn "clojure" (clj->js (into ["-M:run"] args))
+  (let [child (spawn "clojure" (clj->js (into ["-M" "-m" "kotoba-code.main"] args))
                      #js {:cwd app-dir :env js/process.env})
         stdout (atom [])
         stderr (atom [])]
@@ -155,7 +158,7 @@
                     "Do not modify files. Return a concise finding for the parent agent."
                     (str "You are in an isolated git worktree. Make only the requested "
                          "changes and leave them uncommitted for parent review.")))
-        args (cond-> ["-M:run" task root] model (conj model))
+        args (cond-> ["-M" "-m" "kotoba-code.main" task root] model (conj model))
         child (spawn "clojure" (clj->js args)
                      #js {:cwd app-dir
                           :env (js/Object.assign

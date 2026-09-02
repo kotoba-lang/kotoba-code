@@ -1,20 +1,44 @@
-name: ci
+name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
-  test:
+  kotoba-operator:
+    # Default CI is kotoba compile / guest-run. Not clojure -M.
+    # Language pin: kotoba-lang@245493fc68404e0ae0b0cfb426f3881fdba64b5f
+    # (green main test run 33620750254). Emit CLI is Release kotoba.
+    # This job does not claim compiler 8d9f3e8f. There is no kotoba -M.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - uses: DeLaGuardo/setup-clojure@13.4
-        with:
-          cli: latest
-      - run: clojure -M:test
-      - run: clojure -M:lint
+      - name: Install Release kotoba CLI
+        run: |
+          set -eu
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o /tmp/kotoba-linux-amd64.tar.gz \
+            "https://github.com/kotoba-lang/kotoba/releases/download/v0.7.3/kotoba-linux-amd64.tar.gz"
+          tar -xzf /tmp/kotoba-linux-amd64.tar.gz -C /tmp
+          bin=$(find /tmp -type f -name kotoba | head -n 1)
+          test -n "$bin"
+          install -m 755 "$bin" "$HOME/.local/bin/kotoba"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          test -x "$HOME/.local/bin/kotoba"
+      - name: kotoba compile (wasm and web)
+        run: sh scripts/kotoba-compile.sh
+      - name: prove artifacts exist before any emit claim
+        run: |
+          set -eu
+          test -s target/kotoba/main.wasm
+          test -s target/kotoba/main.mjs
+          echo "bytes main.wasm=$(wc -c < target/kotoba/main.wasm)"
+          echo "bytes main.mjs=$(wc -c < target/kotoba/main.mjs)"
+      - name: guest run (instantiateKotoba + exports)
+        run: sh scripts/kotoba-run.sh
+      - name: Linux kexe-verify is HOLD (exit 78, not fake ok)
+        run: |
+          set +e
+          sh scripts/amu-native.sh kotoba/main.kotoba
+          test $? -eq 78

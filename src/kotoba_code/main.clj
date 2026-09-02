@@ -1,38 +1,47 @@
 (ns kotoba-code.main
-  "CLI entry — drive a coding task with kotoba-code.
+  "Leftover JVM library dispatch — not operator start.
 
-    clojure -M:run \"<task>\" <project-root> [model-id]
-    clojure -M:run --help
-    clojure -M:run -h
-    clojure -M:run --interactive <project-root> [model-id]
-    clojure -M:run --doctor <project-root> [model-id]
-    clojure -M:run --doctor-edn <project-root> [model-id]
-    clojure -M:run --check <project-root> [model-id]
-    clojure -M:run --check-edn <project-root> [model-id]
-    clojure -M:run --state-edn <project-root> [model-id]
-    clojure -M:run --next-action-edn <project-root> [model-id]
-    clojure -M:run --budget <project-root> [model-id]
-    clojure -M:run --budget-edn <project-root> [model-id]
-    clojure -M:run --version
-    clojure -M:run --version-edn
-    clojure -M:run --tools
-    clojure -M:run --tools-edn
-    clojure -M:run --commands-edn
-    clojure -M:run --interactive-commands-edn
-    clojure -M:run --capabilities-edn
-    clojure -M:run --log <project-root> [model-id]
-    clojure -M:run --history <project-root> [model-id] [N]
-    clojure -M:run --history-edn <project-root> [model-id] [N]
-    clojure -M:run --last <project-root> [model-id]
-    clojure -M:run --last-edn <project-root> [model-id]
-    clojure -M:run --read <project-root> <path> [start] [end]
-    clojure -M:run --status <project-root>
-    clojure -M:run --diff <project-root>
-    clojure -M:run --test <project-root>
-    clojure -M:run --interrupt <project-root> [model-id] [reason]
-    clojure -M:run --resume <project-root> [model-id]
-    clojure -M:run --reset-budget <project-root> [model-id] [reason]
-    clojure -M:run --stop <project-root> [model-id] [reason]
+  Operator start is:
+    kotoba run kotoba/main.kotoba
+    kotoba compile kotoba/main.kotoba --target wasm|web
+  There is no kotoba -M. :run is gone (not leftover-jvm-run-path exit 2),
+  including :jvm-opts --enable-native-access=ALL-UNNAMED.
+  Do not wrap Datalevin/LMDB JNI as a C .so.
+
+  Leftover library invocation (workflow_dispatch leftover-jvm.yml only):
+
+    clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]
+    clojure -M -m kotoba-code.main --help
+    clojure -M -m kotoba-code.main -h
+    clojure -M -m kotoba-code.main --interactive <project-root> [model-id]
+    clojure -M -m kotoba-code.main --doctor <project-root> [model-id]
+    clojure -M -m kotoba-code.main --doctor-edn <project-root> [model-id]
+    clojure -M -m kotoba-code.main --check <project-root> [model-id]
+    clojure -M -m kotoba-code.main --check-edn <project-root> [model-id]
+    clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]
+    clojure -M -m kotoba-code.main --next-action-edn <project-root> [model-id]
+    clojure -M -m kotoba-code.main --budget <project-root> [model-id]
+    clojure -M -m kotoba-code.main --budget-edn <project-root> [model-id]
+    clojure -M -m kotoba-code.main --version
+    clojure -M -m kotoba-code.main --version-edn
+    clojure -M -m kotoba-code.main --tools
+    clojure -M -m kotoba-code.main --tools-edn
+    clojure -M -m kotoba-code.main --commands-edn
+    clojure -M -m kotoba-code.main --interactive-commands-edn
+    clojure -M -m kotoba-code.main --capabilities-edn
+    clojure -M -m kotoba-code.main --log <project-root> [model-id]
+    clojure -M -m kotoba-code.main --history <project-root> [model-id] [N]
+    clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] [N]
+    clojure -M -m kotoba-code.main --last <project-root> [model-id]
+    clojure -M -m kotoba-code.main --last-edn <project-root> [model-id]
+    clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]
+    clojure -M -m kotoba-code.main --status <project-root>
+    clojure -M -m kotoba-code.main --diff <project-root>
+    clojure -M -m kotoba-code.main --test <project-root>
+    clojure -M -m kotoba-code.main --interrupt <project-root> [model-id] [reason]
+    clojure -M -m kotoba-code.main --resume <project-root> [model-id]
+    clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]
+    clojure -M -m kotoba-code.main --stop <project-root> [model-id] [reason]
 
   Model selection (model-neutral; pick the backend that fits):
     - OpenRouter (default): set OR_KEY; model-id e.g. z-ai/glm-5.2
@@ -888,41 +897,41 @@
              :usage-or-configuration-error 2}})
 
 (def ^:private default-task-usage
-  "usage: clojure -M:run \"<task>\" <project-root> [model-id]")
+  "usage: clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]")
 
 (def ^:private command-usage-lines
-  {"--help" "usage: clojure -M:run --help"
-   "-h" "usage: clojure -M:run -h"
-   "--interactive" "usage: clojure -M:run --interactive <project-root> [model-id]"
-   "--doctor" "usage: clojure -M:run --doctor <project-root> [model-id]"
-   "--doctor-edn" "usage: clojure -M:run --doctor-edn <project-root> [model-id]"
-   "--check" "usage: clojure -M:run --check <project-root> [model-id]"
-   "--check-edn" "usage: clojure -M:run --check-edn <project-root> [model-id]"
-   "--state-edn" "usage: clojure -M:run --state-edn <project-root> [model-id]"
-   "--next-action-edn" "usage: clojure -M:run --next-action-edn <project-root> [model-id]"
-   "--budget" "usage: clojure -M:run --budget <project-root> [model-id]"
-   "--budget-edn" "usage: clojure -M:run --budget-edn <project-root> [model-id]"
-   "--log" "usage: clojure -M:run --log <project-root> [model-id]"
-   "--log-edn" "usage: clojure -M:run --log-edn <project-root> [model-id]"
-   "--history" "usage: clojure -M:run --history <project-root> [model-id] [N]"
-   "--history-edn" "usage: clojure -M:run --history-edn <project-root> [model-id] [N]"
-   "--last" "usage: clojure -M:run --last <project-root> [model-id]"
-   "--last-edn" "usage: clojure -M:run --last-edn <project-root> [model-id]"
-   "--read" "usage: clojure -M:run --read <project-root> <path> [start] [end]"
-   "--status" "usage: clojure -M:run --status <project-root>"
-   "--diff" "usage: clojure -M:run --diff <project-root>"
-   "--test" "usage: clojure -M:run --test <project-root>"
-   "--interrupt" "usage: clojure -M:run --interrupt <project-root> [model-id] [reason]"
-   "--resume" "usage: clojure -M:run --resume <project-root> [model-id]"
-   "--reset-budget" "usage: clojure -M:run --reset-budget <project-root> [model-id] [reason]"
-   "--stop" "usage: clojure -M:run --stop <project-root> [model-id] [reason]"
-   "--version" "usage: clojure -M:run --version"
-   "--version-edn" "usage: clojure -M:run --version-edn"
-   "--tools" "usage: clojure -M:run --tools"
-   "--tools-edn" "usage: clojure -M:run --tools-edn"
-   "--commands-edn" "usage: clojure -M:run --commands-edn"
-   "--interactive-commands-edn" "usage: clojure -M:run --interactive-commands-edn"
-   "--capabilities-edn" "usage: clojure -M:run --capabilities-edn"})
+  {"--help" "usage: clojure -M -m kotoba-code.main --help"
+   "-h" "usage: clojure -M -m kotoba-code.main -h"
+   "--interactive" "usage: clojure -M -m kotoba-code.main --interactive <project-root> [model-id]"
+   "--doctor" "usage: clojure -M -m kotoba-code.main --doctor <project-root> [model-id]"
+   "--doctor-edn" "usage: clojure -M -m kotoba-code.main --doctor-edn <project-root> [model-id]"
+   "--check" "usage: clojure -M -m kotoba-code.main --check <project-root> [model-id]"
+   "--check-edn" "usage: clojure -M -m kotoba-code.main --check-edn <project-root> [model-id]"
+   "--state-edn" "usage: clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"
+   "--next-action-edn" "usage: clojure -M -m kotoba-code.main --next-action-edn <project-root> [model-id]"
+   "--budget" "usage: clojure -M -m kotoba-code.main --budget <project-root> [model-id]"
+   "--budget-edn" "usage: clojure -M -m kotoba-code.main --budget-edn <project-root> [model-id]"
+   "--log" "usage: clojure -M -m kotoba-code.main --log <project-root> [model-id]"
+   "--log-edn" "usage: clojure -M -m kotoba-code.main --log-edn <project-root> [model-id]"
+   "--history" "usage: clojure -M -m kotoba-code.main --history <project-root> [model-id] [N]"
+   "--history-edn" "usage: clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] [N]"
+   "--last" "usage: clojure -M -m kotoba-code.main --last <project-root> [model-id]"
+   "--last-edn" "usage: clojure -M -m kotoba-code.main --last-edn <project-root> [model-id]"
+   "--read" "usage: clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]"
+   "--status" "usage: clojure -M -m kotoba-code.main --status <project-root>"
+   "--diff" "usage: clojure -M -m kotoba-code.main --diff <project-root>"
+   "--test" "usage: clojure -M -m kotoba-code.main --test <project-root>"
+   "--interrupt" "usage: clojure -M -m kotoba-code.main --interrupt <project-root> [model-id] [reason]"
+   "--resume" "usage: clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
+   "--reset-budget" "usage: clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
+   "--stop" "usage: clojure -M -m kotoba-code.main --stop <project-root> [model-id] [reason]"
+   "--version" "usage: clojure -M -m kotoba-code.main --version"
+   "--version-edn" "usage: clojure -M -m kotoba-code.main --version-edn"
+   "--tools" "usage: clojure -M -m kotoba-code.main --tools"
+   "--tools-edn" "usage: clojure -M -m kotoba-code.main --tools-edn"
+   "--commands-edn" "usage: clojure -M -m kotoba-code.main --commands-edn"
+   "--interactive-commands-edn" "usage: clojure -M -m kotoba-code.main --interactive-commands-edn"
+   "--capabilities-edn" "usage: clojure -M -m kotoba-code.main --capabilities-edn"})
 
 (defn- usage-for-command [task]
   (get command-usage-lines task default-task-usage))
@@ -1583,7 +1592,7 @@
    :tool-errors tool-errors
    :tool (:name latest-tool-error)
    :result-tail (:result-tail latest-tool-error)
-   :command "clojure -M:run --history-edn <project-root> [model-id] 10"
+   :command "clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
    :interactive ":history-edn 10"
    :then "resume after reviewing the latest run"})
 
@@ -1630,7 +1639,7 @@
        :corrupt-lines (:corrupt-lines log)
        :errors (vec (take 3 (or (:errors log) [])))
        :env ["KC_LOCAL_LOG_DIR" "KC_LOCAL_LOG"]
-       :command "clojure -M:run --state-edn <project-root> [model-id]"}
+       :command "clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"}
 
       (not (check-ok? doctor "git"))
       {:action :inspect-git
@@ -1641,26 +1650,26 @@
       {:action :inspect-worktree
        :reason :pre-existing-worktree-changes
        :detail worktree-detail
-       :command "clojure -M:run --status <project-root>"
+       :command "clojure -M -m kotoba-code.main --status <project-root>"
        :interactive ":status"
        :then "run the task after committing, stashing, or intentionally accepting the existing changes"}
 
       (:ready? doctor)
       {:action :run-task
        :reason :ready
-       :command "clojure -M:run \"<task>\" <project-root> [model-id]"
+       :command "clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
        :interactive "<task>"}
 
       (= reason :budget-exhausted)
       {:action :reset-budget
        :reason reason
-       :command "clojure -M:run --reset-budget <project-root> [model-id] [reason]"
+       :command "clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
        :interactive ":reset-budget [REASON]"}
 
       (= reason :status-stopped)
       {:action :resume
        :reason reason
-       :command "clojure -M:run --resume <project-root> [model-id]"
+       :command "clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
        :interactive ":resume"}
 
       (and (= reason :interrupted) (pos? tool-errors))
@@ -1672,13 +1681,13 @@
       (= reason :interrupted)
       {:action :resume
        :reason reason
-       :command "clojure -M:run --resume <project-root> [model-id]"
+       :command "clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
        :interactive ":resume"}
 
       :else
       {:action :inspect-state
        :reason (or reason :not-ready)
-       :command "clojure -M:run --state-edn <project-root> [model-id]"
+       :command "clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"
        :interactive ":state"})))
 
 (declare state-report)

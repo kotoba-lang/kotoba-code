@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
+# Leftover compatibility name. Operator start is kotoba run / kotoba compile.
+# There is no kotoba -M and no clojure -M / clj -M start path.
+# Former `exec clojure -M:run` is gone, not leftover-jvm-run-path exit 2.
+
 SOURCE="$0"
 while [ -L "$SOURCE" ]; do
   DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")" && pwd)"
@@ -14,29 +18,11 @@ done
 APP_DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")/.." && pwd)"
 cd "$APP_DIR"
 
-case "${1:-}" in
-  "" )
-    exec clojure -M:run --interactive "$(pwd)"
-    ;;
-  --help|-h)
-    exec clojure -M:run --help
-    ;;
-  --interactive)
-    shift
-    if [ $# -eq 0 ]; then
-      exec clojure -M:run --interactive "$(pwd)"
-    fi
-    exec clojure -M:run --interactive "$@"
-    ;;
-  --*)
-    exec clojure -M:run "$@"
-    ;;
-  *)
-    task="$1"
-    shift
-    if [ $# -eq 0 ]; then
-      exec clojure -M:run "$task" "$(pwd)"
-    fi
-    exec clojure -M:run "$task" "$@"
-    ;;
-esac
+if ! command -v kotoba >/dev/null 2>&1; then
+  echo "kotoba CLI is not on PATH. Operator start is:" >&2
+  echo "  kotoba run kotoba/main.kotoba" >&2
+  echo "There is no kotoba -M and no clojure -M start." >&2
+  exit 127
+fi
+
+exec kotoba run kotoba/main.kotoba "$@"
