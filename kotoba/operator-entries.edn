@@ -8,7 +8,7 @@
   :leftover-nbb-ink ["src/kotoba_code/ink_main.cljs"
                      "src/kotoba_code/ink_runtime.cljs"
                      "bin leftover nbb TUI — host-listen HOLD"]
-  :leftover-compatibility-launcher "bin/claude — leftover name only; start is kotoba run"
+  :leftover-compatibility-launcher "bin/claude — leftover name only; does not exec kotoba run"
   :leftover-jvm-aliases [":test" ":lint"]
   :langchain-langgraph-git-deps "deps.edn leftover library graph; not operator start"
   :enable-native-access ":run :jvm-opts --enable-native-access=ALL-UNNAMED is gone with :run. JNI/FFM leftover. Do not wrap."}

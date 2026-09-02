@@ -1,7 +1,7 @@
 name: leftover-jvm
 
 # Leftover JVM library tests. Not operator start.
-# Default CI is kotoba compile / kotoba run.
+# Default CI is kotoba compile + instantiateKotoba.
 # :run is gone (including --enable-native-access=ALL-UNNAMED).
 # This workflow may invoke leftover `clojure -M -m kotoba-code.main` as a
 # library, not a start alias. Do not wrap Datalevin/LMDB JNI as a C .so.

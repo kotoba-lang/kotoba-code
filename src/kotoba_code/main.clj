@@ -1,9 +1,10 @@
 (ns kotoba-code.main
   "Leftover JVM library dispatch — not operator start.
 
-  Operator start is:
-    kotoba run kotoba/main.kotoba
-    kotoba compile kotoba/main.kotoba --target wasm|web
+  Working operator start is compile + instantiateKotoba
+  (scripts/kotoba-compile.sh then scripts/kotoba-run.sh).
+  kotoba run kotoba/main.kotoba is the intended public command and a
+  CLI source-run gap until the CLI accepts this guest.
   There is no kotoba -M. :run is gone (not leftover-jvm-run-path exit 2),
   including :jvm-opts --enable-native-access=ALL-UNNAMED.
   Do not wrap Datalevin/LMDB JNI as a C .so.

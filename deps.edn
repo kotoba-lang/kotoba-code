@@ -1,13 +1,15 @@
 {:paths ["src"]
  ;; kotoba-code — a model-neutral, test-gated, kotoba-Datom-backed agentic coding
- ;; agent. Operator start is Kotoba, not a Clojure alias:
+ ;; agent. Working operator start is compile + instantiateKotoba:
+ ;;   sh scripts/kotoba-compile.sh
+ ;;   sh scripts/kotoba-run.sh
+ ;; Intended public command (CLI source-run gap until the CLI accepts this guest):
  ;;   kotoba run kotoba/main.kotoba
- ;;   kotoba compile kotoba/main.kotoba --target wasm|web
  ;; There is no kotoba -M. :run is gone (not leftover-jvm-run-path exit 2),
  ;; including :jvm-opts --enable-native-access=ALL-UNNAMED.
  ;; Do not wrap Datalevin/LMDB JNI as a C .so.
  ;; Leftover Java in src/kotoba_code/main.clj stays as a library —
- ;; not a start path. Default CI is kotoba compile / guest-run.
+ ;; not a start path. Default CI is kotoba compile + instantiateKotoba.
  ;; Leftover library graph (not operator start):
  ;;   langchain — ChatModel (openai-model → OpenRouter/Murakumo) + tools + kotoba-db
  ;;   langgraph — create-react-agent loop + datomic-checkpointer (kotoba persistence)

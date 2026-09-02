@@ -18,18 +18,23 @@ This is the native Clojure successor to the throwaway Python bake-off harness
 
 ## How to start now
 
-Operator start is `kotoba run` / `kotoba compile`. There is no `kotoba -M`
-and no `clojure -M` / `clj -M` start path. `:run` is gone (including
-`:jvm-opts --enable-native-access=ALL-UNNAMED`). Do not wrap Datalevin/LMDB
-JNI as a C `.so`.
+Working operator start is compile + `instantiateKotoba`. There is no
+`kotoba -M` and no `clojure -M` / `clj -M` start path. `:run` is gone
+(including `:jvm-opts --enable-native-access=ALL-UNNAMED`). Do not wrap
+Datalevin/LMDB JNI as a C `.so`.
 
 ```sh
 kotoba compile kotoba/main.kotoba --target wasm --output target/kotoba/main.wasm --json
 kotoba compile kotoba/main.kotoba --target web --output target/kotoba/main.mjs --json
-kotoba run kotoba/main.kotoba
 sh scripts/kotoba-compile.sh
 sh scripts/kotoba-run.sh
+bin/kotoba-code
 ```
+
+`kotoba run kotoba/main.kotoba` is the intended public command. On
+Release CLI it is `kotoba/runtime-rejected` (typed forms) until the CLI
+accepts this guest. That is a named CLI source-run gap, not a working
+start. Do not treat `exec kotoba run` as the live operator path.
 
 Language pin is `kotoba-lang@245493fc68404e0ae0b0cfb426f3881fdba64b5f`
 (green main test run 33620750254). See `kotoba-lang.pin.edn`.
@@ -148,11 +153,14 @@ WebGPU/wgpu can optimize per GPU family, but the practical split is:
 ## Use
 
 ```bash
-# operator start (Release kotoba CLI). There is no kotoba -M.
+# working operator start: compile + instantiateKotoba. There is no kotoba -M.
 kotoba compile kotoba/main.kotoba --target wasm --output target/kotoba/main.wasm --json
 kotoba compile kotoba/main.kotoba --target web --output target/kotoba/main.mjs --json
-kotoba run kotoba/main.kotoba
+sh scripts/kotoba-compile.sh
+sh scripts/kotoba-run.sh
 bin/kotoba-code
+# intended public command (CLI source-run gap until the CLI accepts this guest):
+# kotoba run kotoba/main.kotoba
 
 # leftover JVM library tests (workflow_dispatch leftover-jvm.yml only; not start)
 # clojure -X:test
@@ -178,8 +186,8 @@ bin/kotoba-code
 # clojure -M -m kotoba-code.main "inspect this project" /path/to/project codex:
 # clojure -M -m kotoba-code.main "inspect this project" /path/to/project claude:sonnet
 
-# leftover compatibility name — same start as bin/kotoba-code
-bin/claude
+# leftover compatibility name (not start; does not exec kotoba run)
+# bin/claude
 
 # The Ink UI owns the terminal while a turn is running, so tool events and
 # streamed input cannot corrupt the composer. Ctrl-C cancels the active turn.
