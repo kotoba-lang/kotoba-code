@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Leftover OpenRouter harness. Not operator start. :run is gone.
+# Leftover library invocation is clojure -M -m kotoba-code.main.
 set -euo pipefail
 
 export OR_KEY="${OR_KEY:-${OPENROUTER_API_KEY:-}}"
@@ -113,7 +115,8 @@ for model in "${MODELS[@]}"; do
     KC_RECURSION_LIMIT="$RLIM" \
     KC_MAX_TOKENS="$MAX_TOKENS" \
     KC_SESSION="compare-$slug" \
-    clojure -M:run "$TASK" "$work" "$model"
+    # leftover JVM library (not operator start; :run is gone)
+    clojure -M -m kotoba-code.main "$TASK" "$work" "$model"
   ) > "$log" 2>&1
   code="$?"
   set -e

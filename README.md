@@ -16,6 +16,47 @@ organism on the same substrate as the UNSPSC actors — same checkpointer, same 
 This is the native Clojure successor to the throwaway Python bake-off harness
 (`_modelbake/refactor_runner.py`), built entirely on the kotoba-clj stack.
 
+## How to start now
+
+Working operator start is compile + `instantiateKotoba`. There is no
+`kotoba -M` and no `clojure -M` / `clj -M` start path. `:run` is gone
+(including `:jvm-opts --enable-native-access=ALL-UNNAMED`). Do not wrap
+Datalevin/LMDB JNI as a C `.so`.
+
+```sh
+kotoba compile kotoba/main.kotoba --target wasm --output target/kotoba/main.wasm --json
+kotoba compile kotoba/main.kotoba --target web --output target/kotoba/main.mjs --json
+sh scripts/kotoba-compile.sh
+sh scripts/kotoba-run.sh
+bin/kotoba-code
+```
+
+`kotoba run kotoba/main.kotoba` is the intended public command. On
+Release CLI it is `kotoba/runtime-rejected` (typed forms) until the CLI
+accepts this guest. That is a named CLI source-run gap, not a working
+start. Do not treat `exec kotoba run` as the live operator path.
+
+Language pin is `kotoba-lang@245493fc68404e0ae0b0cfb426f3881fdba64b5f`
+(green main test run 33620750254). See `kotoba-lang.pin.edn`.
+Previous pin `48d7d3cb` (murakumo#359) is not current for this repo.
+Emit CLI is Release kotoba; the pin is the language SHA. HOLD/Release is
+not lifted.
+
+Native sealed kexe (only if/when `bin/amu` is on aarch64-macos). Not short
+`aarch64`:
+
+```sh
+bin/amu check kotoba/main.kotoba --jvm-free
+bin/amu compile kotoba/main.kotoba --target aarch64-macos --jvm-free --output main.kexe
+bin/amu verify main.kexe
+```
+
+Linux kexe-verify is HOLD (`scripts/amu-native.sh` exits 78, not fake `:ok`).
+No in-repo `bin/kotoba` emit wrapper (**ADAPTER-EMIT HOLD**). Leftover JVM
+library tests live in `.github/workflows/leftover-jvm.yml`
+(`workflow_dispatch` only, labeled leftover). Default CI is job
+`kotoba-operator`.
+
 ## Three pillars → one project
 
 | Pillar | What it gives | Reused from |
@@ -112,43 +153,41 @@ WebGPU/wgpu can optimize per GPU family, but the practical split is:
 ## Use
 
 ```bash
-# tests (mock model/host plus subprocess CLI/fake-gateway smoke — no network)
-clojure -X:test
-
-# terminal command help
-clojure -M:run --help
-
-# drive a real task (OpenRouter / GLM 5.2 default)
-export OR_KEY=sk-or-...
-clojure -M:run "make the failing test pass" /path/to/project
-
-# override the model explicitly
-clojure -M:run "make the failing test pass" /path/to/project z-ai/glm-5.2
-
-# interactive terminal session
-clojure -M:run --interactive /path/to/project z-ai/glm-5.2
-
-# legacy JVM/JLine terminal UI
-clojure -M:run --tui /path/to/project z-ai/glm-5.2
-
-# product launcher: no arguments opens the ClojureScript/Ink TUI
-# (run npm install once after cloning)
-npm install
+# working operator start: compile + instantiateKotoba. There is no kotoba -M.
+kotoba compile kotoba/main.kotoba --target wasm --output target/kotoba/main.wasm --json
+kotoba compile kotoba/main.kotoba --target web --output target/kotoba/main.mjs --json
+sh scripts/kotoba-compile.sh
+sh scripts/kotoba-run.sh
 bin/kotoba-code
-bin/kotoba-code --tui /path/to/project z-ai/glm-5.2
-bin/kotoba-code --interactive /path/to/project z-ai/glm-5.2 # legacy line mode
+# intended public command (CLI source-run gap until the CLI accepts this guest):
+# kotoba run kotoba/main.kotoba
 
-# subscription-backed inference (uses each CLI's existing login; no API key)
-bin/kotoba-code --codex /path/to/project
-bin/kotoba-code --codex /path/to/project gpt-5.6-sol
-bin/kotoba-code --claude /path/to/project sonnet
+# leftover JVM library tests (workflow_dispatch leftover-jvm.yml only; not start)
+# clojure -X:test
+# clojure -M:test
+# clojure -M:lint
 
-# equivalent model IDs, useful with KOTOBA_MODEL or one-shot runs
-clojure -M:run "inspect this project" /path/to/project codex:
-clojure -M:run "inspect this project" /path/to/project claude:sonnet
+# leftover JVM library dispatch (not a start path; no :run alias):
+# clojure -M -m kotoba-code.main --help
 
-# legacy compatibility launcher
-bin/claude --interactive /path/to/project z-ai/glm-5.2
+# leftover JVM library (not operator start; guest treats task / infer / persist / tui as host-listen HOLD)
+# export OR_KEY=sk-or-...
+# clojure -M -m kotoba-code.main "make the failing test pass" /path/to/project
+# clojure -M -m kotoba-code.main "make the failing test pass" /path/to/project z-ai/glm-5.2
+# clojure -M -m kotoba-code.main --interactive /path/to/project z-ai/glm-5.2
+# leftover nbb Ink TUI is host-listen HOLD, not start:
+# npm install && npx nbb -m kotoba-code.ink-main
+
+# leftover nbb subscription flags used to ride bin/kotoba-code when that
+# wrapper spawned clojure -M:run / nbb Ink. Guest treats infer as host-listen HOLD.
+# npx nbb -m kotoba-code.ink-main
+
+# leftover JVM library model IDs (not start):
+# clojure -M -m kotoba-code.main "inspect this project" /path/to/project codex:
+# clojure -M -m kotoba-code.main "inspect this project" /path/to/project claude:sonnet
+
+# leftover compatibility name (not start; does not exec kotoba run)
+# bin/claude
 
 # The Ink UI owns the terminal while a turn is running, so tool events and
 # streamed input cannot corrupt the composer. Ctrl-C cancels the active turn.
@@ -175,44 +214,15 @@ bin/claude --interactive /path/to/project z-ai/glm-5.2
 - `/openrouter [model]` — switch to OpenRouter
 - `/exit` — exit the TUI
 
-# non-interactive diagnostics
-clojure -M:run --doctor /path/to/project z-ai/glm-5.2
-clojure -M:run --doctor-edn /path/to/project z-ai/glm-5.2
-clojure -M:run --check /path/to/project z-ai/glm-5.2
-clojure -M:run --check-edn /path/to/project z-ai/glm-5.2
-clojure -M:run --state-edn /path/to/project z-ai/glm-5.2
-clojure -M:run --next-action-edn /path/to/project z-ai/glm-5.2
-clojure -M:run --budget /path/to/project z-ai/glm-5.2
-clojure -M:run --budget-edn /path/to/project z-ai/glm-5.2
-clojure -M:run --version
-clojure -M:run --version-edn
-clojure -M:run --tools
-clojure -M:run --tools-edn
-clojure -M:run --commands-edn
-clojure -M:run --interactive-commands-edn
-clojure -M:run --capabilities-edn
-clojure -M:run --log /path/to/project z-ai/glm-5.2
-clojure -M:run --history /path/to/project z-ai/glm-5.2 10
-clojure -M:run --history-edn /path/to/project z-ai/glm-5.2 10
-clojure -M:run --last /path/to/project z-ai/glm-5.2
-clojure -M:run --last-edn /path/to/project z-ai/glm-5.2
-clojure -M:run --read /path/to/project src/demo/math.clj 1 40
-clojure -M:run --status /path/to/project
-clojure -M:run --diff /path/to/project
-clojure -M:run --test /path/to/project
-clojure -M:run --interrupt /path/to/project z-ai/glm-5.2 "review needed"
-clojure -M:run --resume /path/to/project z-ai/glm-5.2
-clojure -M:run --reset-budget /path/to/project z-ai/glm-5.2 "operator extends budget"
-clojure -M:run --stop /path/to/project z-ai/glm-5.2 "operator stop"
-clojure -M:run --stop /path/to/project -- "operator stop without model id"
-
-# or the Murakumo gateway (no key)
-clojure -M:run "…" /path/to/project murakumo:gemma3:4b
-
-# persist the session on a kotoba Datom node (resumable)
-export KOTOBA_URL=http://127.0.0.1:8077 KOTOBA_GRAPH=<cid> KOTOBA_TOKEN=<jwt> KC_SESSION=my-task
-clojure -M:run "…" /path/to/project
+# leftover JVM library diagnostics (not start; guest classifies doctor/check/task as host-listen HOLD)
+# clojure -M -m kotoba-code.main --doctor /path/to/project z-ai/glm-5.2
+# clojure -M -m kotoba-code.main --check /path/to/project z-ai/glm-5.2
+# clojure -M -m kotoba-code.main --version
+# clojure -M -m kotoba-code.main --tools
+# clojure -M -m kotoba-code.main --capabilities-edn
+# clojure -M -m kotoba-code.main "…" /path/to/project murakumo:gemma3:4b
 ```
+
 
 Diagnostics, inspection, history, and operator-control commands only require a
 valid project root. Provider credentials are reported as readiness state, so

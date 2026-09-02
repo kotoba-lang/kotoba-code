@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
 set -eu
 
+# Leftover compatibility name. Not operator start.
+# Former `exec clojure -M:run` is gone, not leftover-jvm-run-path exit 2.
+# Do not exec `kotoba run kotoba/main.kotoba` here: Release CLI source-run
+# of typed forms is kotoba/runtime-rejected. That is the intended public
+# command and a named CLI gap, not a working start.
+
 SOURCE="$0"
 while [ -L "$SOURCE" ]; do
   DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")" && pwd)"
@@ -14,29 +20,12 @@ done
 APP_DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")/.." && pwd)"
 cd "$APP_DIR"
 
-case "${1:-}" in
-  "" )
-    exec clojure -M:run --interactive "$(pwd)"
-    ;;
-  --help|-h)
-    exec clojure -M:run --help
-    ;;
-  --interactive)
-    shift
-    if [ $# -eq 0 ]; then
-      exec clojure -M:run --interactive "$(pwd)"
-    fi
-    exec clojure -M:run --interactive "$@"
-    ;;
-  --*)
-    exec clojure -M:run "$@"
-    ;;
-  *)
-    task="$1"
-    shift
-    if [ $# -eq 0 ]; then
-      exec clojure -M:run "$task" "$(pwd)"
-    fi
-    exec clojure -M:run "$task" "$@"
-    ;;
-esac
+echo "leftover compatibility name. Not operator start." >&2
+echo "working operator start is compile + instantiateKotoba:" >&2
+echo "  bin/kotoba-code" >&2
+echo "  sh scripts/kotoba-compile.sh" >&2
+echo "  sh scripts/kotoba-run.sh" >&2
+echo "intended public command (CLI source-run gap until the CLI accepts this guest):" >&2
+echo "  kotoba run kotoba/main.kotoba" >&2
+echo "leftover JVM library (not start): clojure -M -m kotoba-code.main $*" >&2
+exit 127

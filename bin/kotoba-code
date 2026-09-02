@@ -1,6 +1,18 @@
 #!/usr/bin/env sh
 set -eu
 
+# Working operator start is compile + instantiateKotoba.
+# There is no kotoba -M and no clojure -M / clj -M start path.
+#
+# Replaces the former:
+#   clojure -M:run  (kotoba-code.main, :jvm-opts --enable-native-access=ALL-UNNAMED)
+# That wrapper is gone, not leftover-jvm-run-path exit 2.
+# Do not wrap Datalevin/LMDB JNI as a C .so.
+#
+# Do not exec `kotoba run kotoba/main.kotoba` here. On Release CLI,
+# source-run of this guest is kotoba/runtime-rejected (typed forms). That
+# is the intended public command and a named CLI gap, not a working start.
+
 SOURCE="$0"
 while [ -L "$SOURCE" ]; do
   DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")" && pwd)"
@@ -12,47 +24,15 @@ while [ -L "$SOURCE" ]; do
 done
 
 APP_DIR="$(CDPATH= cd -- "$(dirname -- "$SOURCE")/.." && pwd)"
-CALLER_DIR="${KC_PROJECT_ROOT:-$PWD}"
 cd "$APP_DIR"
 
-run_ink() {
-  PROJECT_ROOT="${1:-$CALLER_DIR}"
-  MODEL_ID="${2:-${KOTOBA_MODEL:-z-ai/glm-5.2}}"
-  export KOTOBA_CODE_HOME="$APP_DIR"
-  export KOTOBA_PROJECT_ROOT="$PROJECT_ROOT"
-  export KOTOBA_MODEL="$MODEL_ID"
-  exec "$APP_DIR/node_modules/.bin/nbb" -m kotoba-code.ink-main
-}
+if [ "$#" -gt 0 ]; then
+  echo "working operator start is compile + instantiateKotoba." >&2
+  echo "leftover subcommands are not dispatched from this wrapper." >&2
+  echo "intended public command (CLI source-run gap until the CLI accepts this guest):" >&2
+  echo "  kotoba run kotoba/main.kotoba" >&2
+  echo "leftover JVM library (not start): clojure -M -m kotoba-code.main $*" >&2
+fi
 
-case "${1:-}" in
-  "")
-    run_ink "$CALLER_DIR"
-    ;;
-  --tui)
-    shift
-    run_ink "${1:-$CALLER_DIR}" "${2:-${KOTOBA_MODEL:-z-ai/glm-5.2}}"
-    ;;
-  --interactive)
-    shift
-    exec clojure -M:run --interactive "${1:-$CALLER_DIR}" "${2:-${KOTOBA_MODEL:-z-ai/glm-5.2}}"
-    ;;
-  --codex)
-    shift
-    run_ink "${1:-$CALLER_DIR}" "codex:${2:-}"
-    ;;
-  --claude)
-    shift
-    run_ink "${1:-$CALLER_DIR}" "claude:${2:-sonnet}"
-    ;;
-  --*)
-    exec clojure -M:run "$@"
-    ;;
-  *)
-    TASK="$1"
-    shift
-    if [ "$#" -eq 0 ]; then
-      exec clojure -M:run "$TASK" "$CALLER_DIR"
-    fi
-    exec clojure -M:run "$TASK" "$@"
-    ;;
-esac
+sh scripts/kotoba-compile.sh
+exec sh scripts/kotoba-run.sh

@@ -1,0 +1,25 @@
+;; Disk inventory for kotoba-amu / language-pin audits.
+;; Last audit of main (pre this branch): zero .kotoba / .cljk / .kexe.
+;; Do not compile leftover JVM, nbb Ink, or a host OS binary as a kexe.
+{:kotoba-lang/pin "245493fc68404e0ae0b0cfb426f3881fdba64b5f"
+ :operator-entries ["kotoba/main.kotoba"]
+ :not-operator-start
+ {:leftover-jvm-main "src/kotoba_code/main.clj — leftover library dispatch, not a start alias"
+  :leftover-nbb-ink ["src/kotoba_code/ink_main.cljs"
+                     "src/kotoba_code/ink_runtime.cljs"
+                     "bin leftover nbb TUI — host-listen HOLD"]
+  :leftover-compatibility-launcher "bin/claude — leftover name only; does not exec kotoba run"
+  :leftover-jvm-aliases [":test" ":lint"]
+  :langchain-langgraph-git-deps "deps.edn leftover library graph; not operator start"
+  :enable-native-access ":run :jvm-opts --enable-native-access=ALL-UNNAMED is gone with :run. JNI/FFM leftover. Do not wrap."}
+ :kexe {:emitted []
+        :linux-verify :hold
+        :release-target "aarch64-macos"
+        :short-aarch64-not-release true
+        :invocation ["bin/amu check kotoba/main.kotoba --jvm-free"
+                     "bin/amu compile kotoba/main.kotoba --target aarch64-macos --jvm-free --output main.kexe"
+                     "bin/amu verify main.kexe"]}
+ :do-not-wrap ["Datalevin/LMDB JNI"
+               "--enable-native-access=ALL-UNNAMED"
+               "tech.kwik/kwik"
+               "org.bouncycastle/bcpkix-jdk18on"]}

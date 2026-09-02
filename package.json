@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "compile": "sh scripts/kotoba-compile.sh",
+    "test": "sh scripts/kotoba-run.sh",
+    "check": "sh scripts/kotoba-compile.sh && sh scripts/kotoba-run.sh",
     "tui": "nbb -m kotoba-code.ink-main",
     "test:cljs": "nbb -m kotoba-code.ink-test"
   },
