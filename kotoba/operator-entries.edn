@@ -1,7 +1,7 @@
 ;; Disk inventory for kotoba-amu / language-pin audits.
 ;; Last audit of main (pre this branch): zero .kotoba / .cljk / .kexe.
 ;; Do not compile leftover JVM, nbb Ink, or a host OS binary as a kexe.
-{:kotoba-lang/pin "245493fc68404e0ae0b0cfb426f3881fdba64b5f"
+{:kotoba-lang/pin "6b2f2e8e807361a9728b9d00c498a9e8d48bfc02"
  :operator-entries ["kotoba/main.kotoba"]
  :not-operator-start
  {:leftover-jvm-main "src/kotoba_code/main.clj — leftover library dispatch, not a start alias"
