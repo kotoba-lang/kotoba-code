@@ -38,7 +38,8 @@ start. Do not treat `exec kotoba run` as the live operator path.
 
 Language pin is `kotoba-lang@b19e058603e30a0ea8f6f8b4ec8c5622d4371a16`
 (green main test run 33838649365). See `kotoba-lang.pin.edn`.
-Previous pin `6b2f2e8e`. Older pin `245493fc` (kotoba-code#8) is not current.
+Previous pin `6b2f2e8e` (intended-retarget; never shipped on this repo's main).
+Older pin `245493fc` (kotoba-code#8) is not current.
 Emit CLI is Release kotoba; the pin is the language SHA. HOLD/Release is
 not lifted.
 
