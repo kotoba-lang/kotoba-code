@@ -16,7 +16,7 @@
             ["node:fs" :as fs]
             ["node:path" :as path]
             [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [kotoba.lang.text :as str]))
 
 ;; Every path is injected. A harness that only runs on the machine that wrote it
 ;; has not been landed, it has been filed.

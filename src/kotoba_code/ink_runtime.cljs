@@ -1,7 +1,7 @@
 (ns kotoba-code.ink-runtime
   "Leftover nbb Ink host-listen HOLD — not operator start.
   :run is gone. Do not wrap Datalevin/LMDB JNI as a C .so."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             ["node:child_process" :refer [spawn]]
             ["node:fs" :as fs]
             ["node:os" :as os]
