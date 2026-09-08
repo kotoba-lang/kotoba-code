@@ -4,7 +4,7 @@
   Output stays in the terminal's native scrollback. JLine owns terminal sizing,
   line editing, history, signals, Unicode input, and cursor restoration."
   (:require [clojure.java.io :as io]
-            [clojure.string :as str])
+            [kotoba.lang.text :as str])
   (:import [java.nio.file Paths]
            [org.jline.reader EndOfFileException LineReader LineReader$Option LineReaderBuilder
             UserInterruptException]
@@ -14,10 +14,10 @@
 (def esc "\u001b[")
 
 (defn- truthy-env? [name]
-  (#{"1" "true"} (some-> (System/getenv name) str/lower-case)))
+  (#{"1" "true"} (some-> (System/getenv name) str/lower)))
 
 (defn terminal? []
-  (and (not (#{"0" "false"} (some-> (System/getenv "KC_TUI") str/lower-case)))
+  (and (not (#{"0" "false"} (some-> (System/getenv "KC_TUI") str/lower)))
        (or (truthy-env? "KC_TUI")
            (and (System/console)
                 (not= "dumb" (System/getenv "TERM"))))))

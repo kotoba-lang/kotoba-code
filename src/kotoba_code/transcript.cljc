@@ -1,6 +1,6 @@
 (ns kotoba-code.transcript
   "Extract compact run transcripts from langchain/langgraph message state."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (defn- text [content]
   (cond
@@ -19,7 +19,7 @@
       (str/replace #"\bsk-[A-Za-z0-9._-]+" "sk-[REDACTED]")))
 
 (defn- sensitive-key? [k]
-  (let [s (str/lower-case (name k))
+  (let [s (str/lower (name k))
         s* (str/replace s #"[_\s]+" "-")]
     (boolean
      (or (#{"authorization" "api-key" "apikey" "token" "password" "passwd" "secret"} s*)

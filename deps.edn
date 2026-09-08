@@ -13,7 +13,12 @@
  ;; Leftover library graph (not operator start):
  ;;   langchain — ChatModel (openai-model → OpenRouter/Murakumo) + tools + kotoba-db
  ;;   langgraph — create-react-agent loop + datomic-checkpointer (kotoba persistence)
- :deps {io.github.kotoba-lang/langchain {:git/url "https://github.com/kotoba-lang/langchain.git"
+ :deps {
+        ;; kotoba.lang.text, not clojure.string. Pinned as an explicit floor:
+        ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
+        ;; this repo silently rides whatever a sibling happens to name.
+        io.github.kotoba-lang/text {:git/sha "73bdb13ae7a3d004b44bca08be03a3191157a38f"}
+       io.github.kotoba-lang/langchain {:git/url "https://github.com/kotoba-lang/langchain.git"
                                          :sha "c7943d7542f28242a654ff3e0c37100b48a9417d"}
         io.github.kotoba-lang/langgraph {:git/url "https://github.com/kotoba-lang/langgraph.git"
                                          :sha "5b4e5e70837b849b14b6a5800894e3be202ad5fa"}

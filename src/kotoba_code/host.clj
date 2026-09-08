@@ -7,7 +7,7 @@
   are recorded so a failed gate can roll the working tree back via git."
   (:require [clojure.java.io :as io]
             [clojure.java.shell :as sh]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [json.data-json :as json])
   (:import [java.net.http HttpClient HttpRequest HttpRequest$BodyPublishers
             HttpResponse$BodyHandlers]
@@ -37,7 +37,7 @@
         b (doto (HttpRequest/newBuilder (URI/create url))
             (.timeout (Duration/ofMillis timeout-ms)))]
     (doseq [[k v] headers] (.header b (name k) (str v)))
-    (.method b (str/upper-case (name (or method :post)))
+    (.method b (str/upper (name (or method :post)))
              (HttpRequest$BodyPublishers/ofString (or body "")))
     (let [resp (.send @client (.build b) (HttpResponse$BodyHandlers/ofString))]
       {:status (.statusCode resp) :body (.body resp)})))
