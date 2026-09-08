@@ -1,5 +1,5 @@
 (ns kotoba-code.ink-main
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [kotoba-code.composer-input :refer [composer-input]]
             [kotoba-code.ink-runtime :as runtime]
             [kotoba-code.slash-commands :as commands]
