@@ -1,5 +1,5 @@
 (ns kotoba-code.slash-commands
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def catalog
   [{:name "/help" :usage "/help" :description "Show commands"}
@@ -25,7 +25,7 @@
       {:command token :args args})))
 
 (defn suggestions [input]
-  (let [q (str/lower-case (str/trim (or input "")))]
+  (let [q (str/lower (str/trim (or input "")))]
     (if (str/starts-with? q "/")
       (->> catalog
            (filter #(str/starts-with? (:name %) (first (str/split q #"\s+"))))

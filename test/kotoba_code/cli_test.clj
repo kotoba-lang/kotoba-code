@@ -3,7 +3,7 @@
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [clojure.test :refer [deftest is]])
   (:import [com.sun.net.httpserver HttpServer]
            [java.net InetSocketAddress]

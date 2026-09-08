@@ -54,7 +54,7 @@
     KC_SESSION sets the session/thread id (default \"kotoba-code\")."
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [kotoba-code.host :as host]
             [kotoba-code.agent :as agent]
             [kotoba-code.gate :as gate]
@@ -154,7 +154,7 @@
         (str/blank? scheme)
         {:error (str "expected absolute URL for " k)}
 
-        (not (#{"http" "https"} (str/lower-case scheme)))
+        (not (#{"http" "https"} (str/lower scheme)))
         {:error (str "expected http or https URL for " k)}
 
         (str/blank? (.getHost uri))
@@ -171,7 +171,7 @@
    "KC_LIVE_TOOLS"])
 
 (defn- parse-boolean-env-value [k raw]
-  (let [v (str/lower-case (str/trim raw))]
+  (let [v (str/lower (str/trim raw))]
     (cond
       (#{"true" "false"} v)
       {:value (= "true" v)}
@@ -271,7 +271,7 @@
   (- (now-ms) start-ms))
 
 (defn- enabled? [env-key]
-  (not= "false" (str/lower-case (or (env env-key) ""))))
+  (not= "false" (str/lower (or (env env-key) ""))))
 
 (defn- clipped
   ([x] (clipped x 180))
@@ -316,7 +316,7 @@
     (subs s* 0 (min 120 (count s*)))))
 
 (defn- local-log-file [loop-id]
-  (when-not (= "false" (str/lower-case (or (env "KC_LOCAL_LOG") "")))
+  (when-not (= "false" (str/lower (or (env "KC_LOCAL_LOG") "")))
     (io/file (or (env "KC_LOCAL_LOG_DIR")
                  (str (System/getProperty "user.home") File/separator ".kotoba-code" File/separator "sessions"))
              (str (safe-file-name loop-id) ".edn"))))
@@ -1605,7 +1605,7 @@
         git-detail (:detail (check-by-label doctor "git"))
         worktree-detail (let [detail (str/trim (or git-detail ""))]
                           (when (and (seq detail)
-                                     (not (str/starts-with? (str/lower-case detail) "error:")))
+                                     (not (str/starts-with? (str/lower detail) "error:")))
                             detail))]
     (cond
       (not (check-ok? doctor "root"))
@@ -2056,7 +2056,7 @@
 
 (defn- parse-key-value [s]
   (when-let [[_ k v] (re-matches #"([^=]+)=(.*)" (str/trim (or s "")))]
-    [(str/lower-case (str/trim k)) (str/trim v)]))
+    [(str/lower (str/trim k)) (str/trim v)]))
 
 (defn- update-session-map! [session-state key-value]
   (when-let [[k v] (parse-key-value key-value)]
@@ -2325,7 +2325,7 @@
       :continue)))
 
 (defn- print-transcript! [result]
-  (when-not (= "false" (str/lower-case (or (env "KC_TOOL_TRANSCRIPT") "")))
+  (when-not (= "false" (str/lower (or (env "KC_TOOL_TRANSCRIPT") "")))
     (let [lines (transcript/lines (:final result))]
       (when (seq lines)
         (println "\n-- tools --")
