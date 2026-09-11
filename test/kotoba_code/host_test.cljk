@@ -297,4 +297,4 @@
         _ (init-repo! dir)
         h (host/fs-host dir :process-timeout-ms 1)]
     (is (re-find #"TIMEOUT"
-                 ((:shell h) "clojure -M:test")))))
+                 ((:shell h) "kbb -M:test")))))

@@ -47,7 +47,7 @@
 
 (defn- run-cli [args & {:keys [env timeout-ms stdin]
                         :or {timeout-ms 20000}}]
-  (let [pb (ProcessBuilder. ^java.util.List (vec (concat ["clojure" "-M" "-m" "kotoba-code.main"] args)))
+  (let [pb (ProcessBuilder. ^java.util.List (vec (concat ["kbb" "-M" "-m" "kotoba-code.main"] args)))
         env-map (.environment pb)]
     (doseq [k ["OR_KEY" "OPENROUTER_API_KEY"
                "KOTOBA_URL" "KOTOBA_GRAPH" "KOTOBA_TOKEN"
@@ -462,7 +462,7 @@
 	red-test (run-cli ["--test" (.getPath root)]
 			  :env (assoc env
 				      "KC_TEST_CMD"
-				      "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""))
+				      "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""))
         _ (spit (io/file root "src/demo/math.clj")
 	        "(ns demo.math)\n(defn add [a b]\n  (+ a b))\n")
 	status (run-cli ["--status" (.getPath root)] :env env)
@@ -471,7 +471,7 @@
         green-test (run-cli ["--test" (.getPath root)]
                             :env (assoc env
                                         "KC_TEST_CMD"
-                                        "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""))]
+                                        "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""))]
     (is (= 0 (:exit help)) (str (:out help) (:err help)))
     (is (str/includes? (:out help) "usage: clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"))
     (is (str/includes? (:out help) "or: usage: clojure -M -m kotoba-code.main --interactive <project-root> [model-id]"))
@@ -743,7 +743,7 @@
         env {"KC_TOOL_TRANSCRIPT" "true"
              "KC_LIVE_TOOLS" "false"
              "KC_MURAKUMO_URL" (:url gateway)
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_PROCESS_TIMEOUT_MS" "20000"
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id
@@ -782,7 +782,7 @@
         env {"KC_TOOL_TRANSCRIPT" "true"
              "KC_LIVE_TOOLS" "false"
              "KC_MURAKUMO_URL" (:url gateway)
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_PROCESS_TIMEOUT_MS" "20000"
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id
@@ -823,7 +823,7 @@
         env {"KC_TOOL_TRANSCRIPT" "true"
              "KC_LIVE_TOOLS" "false"
              "KC_MURAKUMO_URL" (:url gateway)
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_PROCESS_TIMEOUT_MS" "20000"
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id
@@ -856,7 +856,7 @@
         env {"KC_TOOL_TRANSCRIPT" "true"
              "KC_LIVE_TOOLS" "false"
              "KC_MURAKUMO_URL" (:url gateway)
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_PROCESS_TIMEOUT_MS" "20000"
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id
@@ -889,7 +889,7 @@
         env {"KC_TOOL_TRANSCRIPT" "true"
              "KC_LIVE_TOOLS" "false"
              "KC_MURAKUMO_URL" (:url gateway)
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_PROCESS_TIMEOUT_MS" "20000"
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id
@@ -925,7 +925,7 @@
         env {"KC_TOOL_TRANSCRIPT" "true"
              "KC_LIVE_TOOLS" "false"
              "KC_MURAKUMO_URL" (:url gateway)
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_PROCESS_TIMEOUT_MS" "20000"
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id
@@ -989,7 +989,7 @@
              "KC_RUN_TIMEOUT_MS" "900"
              "KC_HTTP_TIMEOUT_MS" "10000"
              "KC_PROCESS_TIMEOUT_MS" "20000"
-             "KC_TEST_CMD" "clojure -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
+             "KC_TEST_CMD" "kbb -M -e \"(require 'demo.math-test 'clojure.test) (clojure.test/run-tests 'demo.math-test)\""
              "KC_LOCAL_LOG_DIR" (.getPath log-dir)
              "KC_LOOP_ID" loop-id}]
     (try

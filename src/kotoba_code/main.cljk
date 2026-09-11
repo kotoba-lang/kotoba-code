@@ -11,38 +11,38 @@
 
   Leftover library invocation (workflow_dispatch leftover-jvm.yml only):
 
-    clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]
-    clojure -M -m kotoba-code.main --help
-    clojure -M -m kotoba-code.main -h
-    clojure -M -m kotoba-code.main --interactive <project-root> [model-id]
-    clojure -M -m kotoba-code.main --doctor <project-root> [model-id]
-    clojure -M -m kotoba-code.main --doctor-edn <project-root> [model-id]
-    clojure -M -m kotoba-code.main --check <project-root> [model-id]
-    clojure -M -m kotoba-code.main --check-edn <project-root> [model-id]
-    clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]
-    clojure -M -m kotoba-code.main --next-action-edn <project-root> [model-id]
-    clojure -M -m kotoba-code.main --budget <project-root> [model-id]
-    clojure -M -m kotoba-code.main --budget-edn <project-root> [model-id]
-    clojure -M -m kotoba-code.main --version
-    clojure -M -m kotoba-code.main --version-edn
-    clojure -M -m kotoba-code.main --tools
-    clojure -M -m kotoba-code.main --tools-edn
-    clojure -M -m kotoba-code.main --commands-edn
-    clojure -M -m kotoba-code.main --interactive-commands-edn
-    clojure -M -m kotoba-code.main --capabilities-edn
-    clojure -M -m kotoba-code.main --log <project-root> [model-id]
-    clojure -M -m kotoba-code.main --history <project-root> [model-id] [N]
-    clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] [N]
-    clojure -M -m kotoba-code.main --last <project-root> [model-id]
-    clojure -M -m kotoba-code.main --last-edn <project-root> [model-id]
-    clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]
-    clojure -M -m kotoba-code.main --status <project-root>
-    clojure -M -m kotoba-code.main --diff <project-root>
-    clojure -M -m kotoba-code.main --test <project-root>
-    clojure -M -m kotoba-code.main --interrupt <project-root> [model-id] [reason]
-    clojure -M -m kotoba-code.main --resume <project-root> [model-id]
-    clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]
-    clojure -M -m kotoba-code.main --stop <project-root> [model-id] [reason]
+    kbb -M -m kotoba-code.main \"<task>\" <project-root> [model-id]
+    kbb -M -m kotoba-code.main --help
+    kbb -M -m kotoba-code.main -h
+    kbb -M -m kotoba-code.main --interactive <project-root> [model-id]
+    kbb -M -m kotoba-code.main --doctor <project-root> [model-id]
+    kbb -M -m kotoba-code.main --doctor-edn <project-root> [model-id]
+    kbb -M -m kotoba-code.main --check <project-root> [model-id]
+    kbb -M -m kotoba-code.main --check-edn <project-root> [model-id]
+    kbb -M -m kotoba-code.main --state-edn <project-root> [model-id]
+    kbb -M -m kotoba-code.main --next-action-edn <project-root> [model-id]
+    kbb -M -m kotoba-code.main --budget <project-root> [model-id]
+    kbb -M -m kotoba-code.main --budget-edn <project-root> [model-id]
+    kbb -M -m kotoba-code.main --version
+    kbb -M -m kotoba-code.main --version-edn
+    kbb -M -m kotoba-code.main --tools
+    kbb -M -m kotoba-code.main --tools-edn
+    kbb -M -m kotoba-code.main --commands-edn
+    kbb -M -m kotoba-code.main --interactive-commands-edn
+    kbb -M -m kotoba-code.main --capabilities-edn
+    kbb -M -m kotoba-code.main --log <project-root> [model-id]
+    kbb -M -m kotoba-code.main --history <project-root> [model-id] [N]
+    kbb -M -m kotoba-code.main --history-edn <project-root> [model-id] [N]
+    kbb -M -m kotoba-code.main --last <project-root> [model-id]
+    kbb -M -m kotoba-code.main --last-edn <project-root> [model-id]
+    kbb -M -m kotoba-code.main --read <project-root> <path> [start] [end]
+    kbb -M -m kotoba-code.main --status <project-root>
+    kbb -M -m kotoba-code.main --diff <project-root>
+    kbb -M -m kotoba-code.main --test <project-root>
+    kbb -M -m kotoba-code.main --interrupt <project-root> [model-id] [reason]
+    kbb -M -m kotoba-code.main --resume <project-root> [model-id]
+    kbb -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]
+    kbb -M -m kotoba-code.main --stop <project-root> [model-id] [reason]
 
   Model selection (model-neutral; pick the backend that fits):
     - OpenRouter (default): set OR_KEY; model-id e.g. z-ai/glm-5.2
@@ -898,41 +898,41 @@
              :usage-or-configuration-error 2}})
 
 (def ^:private default-task-usage
-  "usage: clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]")
+  "usage: kbb -M -m kotoba-code.main \"<task>\" <project-root> [model-id]")
 
 (def ^:private command-usage-lines
-  {"--help" "usage: clojure -M -m kotoba-code.main --help"
-   "-h" "usage: clojure -M -m kotoba-code.main -h"
-   "--interactive" "usage: clojure -M -m kotoba-code.main --interactive <project-root> [model-id]"
-   "--doctor" "usage: clojure -M -m kotoba-code.main --doctor <project-root> [model-id]"
-   "--doctor-edn" "usage: clojure -M -m kotoba-code.main --doctor-edn <project-root> [model-id]"
-   "--check" "usage: clojure -M -m kotoba-code.main --check <project-root> [model-id]"
-   "--check-edn" "usage: clojure -M -m kotoba-code.main --check-edn <project-root> [model-id]"
-   "--state-edn" "usage: clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"
-   "--next-action-edn" "usage: clojure -M -m kotoba-code.main --next-action-edn <project-root> [model-id]"
-   "--budget" "usage: clojure -M -m kotoba-code.main --budget <project-root> [model-id]"
-   "--budget-edn" "usage: clojure -M -m kotoba-code.main --budget-edn <project-root> [model-id]"
-   "--log" "usage: clojure -M -m kotoba-code.main --log <project-root> [model-id]"
-   "--log-edn" "usage: clojure -M -m kotoba-code.main --log-edn <project-root> [model-id]"
-   "--history" "usage: clojure -M -m kotoba-code.main --history <project-root> [model-id] [N]"
-   "--history-edn" "usage: clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] [N]"
-   "--last" "usage: clojure -M -m kotoba-code.main --last <project-root> [model-id]"
-   "--last-edn" "usage: clojure -M -m kotoba-code.main --last-edn <project-root> [model-id]"
-   "--read" "usage: clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]"
-   "--status" "usage: clojure -M -m kotoba-code.main --status <project-root>"
-   "--diff" "usage: clojure -M -m kotoba-code.main --diff <project-root>"
-   "--test" "usage: clojure -M -m kotoba-code.main --test <project-root>"
-   "--interrupt" "usage: clojure -M -m kotoba-code.main --interrupt <project-root> [model-id] [reason]"
-   "--resume" "usage: clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
-   "--reset-budget" "usage: clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
-   "--stop" "usage: clojure -M -m kotoba-code.main --stop <project-root> [model-id] [reason]"
-   "--version" "usage: clojure -M -m kotoba-code.main --version"
-   "--version-edn" "usage: clojure -M -m kotoba-code.main --version-edn"
-   "--tools" "usage: clojure -M -m kotoba-code.main --tools"
-   "--tools-edn" "usage: clojure -M -m kotoba-code.main --tools-edn"
-   "--commands-edn" "usage: clojure -M -m kotoba-code.main --commands-edn"
-   "--interactive-commands-edn" "usage: clojure -M -m kotoba-code.main --interactive-commands-edn"
-   "--capabilities-edn" "usage: clojure -M -m kotoba-code.main --capabilities-edn"})
+  {"--help" "usage: kbb -M -m kotoba-code.main --help"
+   "-h" "usage: kbb -M -m kotoba-code.main -h"
+   "--interactive" "usage: kbb -M -m kotoba-code.main --interactive <project-root> [model-id]"
+   "--doctor" "usage: kbb -M -m kotoba-code.main --doctor <project-root> [model-id]"
+   "--doctor-edn" "usage: kbb -M -m kotoba-code.main --doctor-edn <project-root> [model-id]"
+   "--check" "usage: kbb -M -m kotoba-code.main --check <project-root> [model-id]"
+   "--check-edn" "usage: kbb -M -m kotoba-code.main --check-edn <project-root> [model-id]"
+   "--state-edn" "usage: kbb -M -m kotoba-code.main --state-edn <project-root> [model-id]"
+   "--next-action-edn" "usage: kbb -M -m kotoba-code.main --next-action-edn <project-root> [model-id]"
+   "--budget" "usage: kbb -M -m kotoba-code.main --budget <project-root> [model-id]"
+   "--budget-edn" "usage: kbb -M -m kotoba-code.main --budget-edn <project-root> [model-id]"
+   "--log" "usage: kbb -M -m kotoba-code.main --log <project-root> [model-id]"
+   "--log-edn" "usage: kbb -M -m kotoba-code.main --log-edn <project-root> [model-id]"
+   "--history" "usage: kbb -M -m kotoba-code.main --history <project-root> [model-id] [N]"
+   "--history-edn" "usage: kbb -M -m kotoba-code.main --history-edn <project-root> [model-id] [N]"
+   "--last" "usage: kbb -M -m kotoba-code.main --last <project-root> [model-id]"
+   "--last-edn" "usage: kbb -M -m kotoba-code.main --last-edn <project-root> [model-id]"
+   "--read" "usage: kbb -M -m kotoba-code.main --read <project-root> <path> [start] [end]"
+   "--status" "usage: kbb -M -m kotoba-code.main --status <project-root>"
+   "--diff" "usage: kbb -M -m kotoba-code.main --diff <project-root>"
+   "--test" "usage: kbb -M -m kotoba-code.main --test <project-root>"
+   "--interrupt" "usage: kbb -M -m kotoba-code.main --interrupt <project-root> [model-id] [reason]"
+   "--resume" "usage: kbb -M -m kotoba-code.main --resume <project-root> [model-id]"
+   "--reset-budget" "usage: kbb -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
+   "--stop" "usage: kbb -M -m kotoba-code.main --stop <project-root> [model-id] [reason]"
+   "--version" "usage: kbb -M -m kotoba-code.main --version"
+   "--version-edn" "usage: kbb -M -m kotoba-code.main --version-edn"
+   "--tools" "usage: kbb -M -m kotoba-code.main --tools"
+   "--tools-edn" "usage: kbb -M -m kotoba-code.main --tools-edn"
+   "--commands-edn" "usage: kbb -M -m kotoba-code.main --commands-edn"
+   "--interactive-commands-edn" "usage: kbb -M -m kotoba-code.main --interactive-commands-edn"
+   "--capabilities-edn" "usage: kbb -M -m kotoba-code.main --capabilities-edn"})
 
 (defn- usage-for-command [task]
   (get command-usage-lines task default-task-usage))
@@ -1561,7 +1561,7 @@
                             " model-retry-backoff=" (or (env "KC_MODEL_RETRY_BACKOFF_MS") "1500"))}
               {:label "test command"
                :ok? true
-               :detail (clipped (or (env "KC_TEST_CMD") "clojure -X:test") 240)}]}))
+               :detail (clipped (or (env "KC_TEST_CMD") "kbb -X:test") 240)}]}))
 
 (defn- print-doctor-report! [{:keys [checks]}]
   (println "Doctor:")
@@ -1593,7 +1593,7 @@
    :tool-errors tool-errors
    :tool (:name latest-tool-error)
    :result-tail (:result-tail latest-tool-error)
-   :command "clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
+   :command "kbb -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
    :interactive ":history-edn 10"
    :then "resume after reviewing the latest run"})
 
@@ -1640,7 +1640,7 @@
        :corrupt-lines (:corrupt-lines log)
        :errors (vec (take 3 (or (:errors log) [])))
        :env ["KC_LOCAL_LOG_DIR" "KC_LOCAL_LOG"]
-       :command "clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"}
+       :command "kbb -M -m kotoba-code.main --state-edn <project-root> [model-id]"}
 
       (not (check-ok? doctor "git"))
       {:action :inspect-git
@@ -1651,26 +1651,26 @@
       {:action :inspect-worktree
        :reason :pre-existing-worktree-changes
        :detail worktree-detail
-       :command "clojure -M -m kotoba-code.main --status <project-root>"
+       :command "kbb -M -m kotoba-code.main --status <project-root>"
        :interactive ":status"
        :then "run the task after committing, stashing, or intentionally accepting the existing changes"}
 
       (:ready? doctor)
       {:action :run-task
        :reason :ready
-       :command "clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
+       :command "kbb -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
        :interactive "<task>"}
 
       (= reason :budget-exhausted)
       {:action :reset-budget
        :reason reason
-       :command "clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
+       :command "kbb -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
        :interactive ":reset-budget [REASON]"}
 
       (= reason :status-stopped)
       {:action :resume
        :reason reason
-       :command "clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
+       :command "kbb -M -m kotoba-code.main --resume <project-root> [model-id]"
        :interactive ":resume"}
 
       (and (= reason :interrupted) (pos? tool-errors))
@@ -1682,13 +1682,13 @@
       (= reason :interrupted)
       {:action :resume
        :reason reason
-       :command "clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
+       :command "kbb -M -m kotoba-code.main --resume <project-root> [model-id]"
        :interactive ":resume"}
 
       :else
       {:action :inspect-state
        :reason (or reason :not-ready)
-       :command "clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"
+       :command "kbb -M -m kotoba-code.main --state-edn <project-root> [model-id]"
        :interactive ":state"})))
 
 (declare state-report)

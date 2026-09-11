@@ -1,6 +1,6 @@
 (ns main
   (:schemas {;; Whole-component operator entry for kotoba-code.
-             ;; Replaces clojure -M:run (kotoba-code.main) including
+             ;; Replaces kbb -M:run (kotoba-code.main) including
              ;; :jvm-opts --enable-native-access=ALL-UNNAMED.
              ;; Do not wrap Datalevin/LMDB JNI as a C .so.
              :main/starts-with [:record :main/starts-with
@@ -16,7 +16,7 @@
             model-backend command-status]))
 
 ;; Operator entry for kotoba-lang/kotoba-code.
-;; Replaces deps.edn :run (`clojure -M:run` → kotoba-code.main).
+;; Replaces deps.edn :run (`kbb -M:run` → kotoba-code.main).
 ;; Working start is compile + instantiateKotoba:
 ;;   kotoba compile kotoba/main.kotoba --target wasm|web
 ;;   sh scripts/kotoba-compile.sh && sh scripts/kotoba-run.sh

@@ -19,7 +19,7 @@ This is the native Clojure successor to the throwaway Python bake-off harness
 ## How to start now
 
 Working operator start is compile + `instantiateKotoba`. There is no
-`kotoba -M` and no `clojure -M` / `clj -M` start path. `:run` is gone
+`kotoba -M` and no `kbb -M` / `kbb -M` start path. `:run` is gone
 (including `:jvm-opts --enable-native-access=ALL-UNNAMED`). Do not wrap
 Datalevin/LMDB JNI as a C `.so`.
 
@@ -86,7 +86,7 @@ Two harnesses live in `scripts/`, and they answer different questions:
 
 | harness | question | gate |
 |---|---|---|
-| `compare-openrouter-models.sh` | can this model write **Clojure**? | `clojure -M:test` on a synthetic fixture |
+| `compare-openrouter-models.sh` | can this model write **Clojure**? | `kbb -M:test` on a synthetic fixture |
 | [`scripts/orbench`](scripts/orbench/README.md) | can this model write **Kotoba**? | the Kotoba compiler — inspect / test on jvm-kir+js+wasm / aarch64 native |
 
 orbench holds out real landed ports from `kotoba-lang/murakumo` as its oracle,
@@ -164,28 +164,28 @@ bin/kotoba-code
 # kotoba run kotoba/main.kotoba
 
 # leftover JVM library tests (workflow_dispatch leftover-jvm.yml only; not start)
-# clojure -X:test
-# clojure -M:test
-# clojure -M:lint
+# kbb -X:test
+# kbb -M:test
+# kbb -M:lint
 
 # leftover JVM library dispatch (not a start path; no :run alias):
-# clojure -M -m kotoba-code.main --help
+# kbb -M -m kotoba-code.main --help
 
 # leftover JVM library (not operator start; guest treats task / infer / persist / tui as host-listen HOLD)
 # export OR_KEY=sk-or-...
-# clojure -M -m kotoba-code.main "make the failing test pass" /path/to/project
-# clojure -M -m kotoba-code.main "make the failing test pass" /path/to/project z-ai/glm-5.2
-# clojure -M -m kotoba-code.main --interactive /path/to/project z-ai/glm-5.2
+# kbb -M -m kotoba-code.main "make the failing test pass" /path/to/project
+# kbb -M -m kotoba-code.main "make the failing test pass" /path/to/project z-ai/glm-5.2
+# kbb -M -m kotoba-code.main --interactive /path/to/project z-ai/glm-5.2
 # leftover nbb Ink TUI is host-listen HOLD, not start:
-# npm install && npx nbb -m kotoba-code.ink-main
+# npm install && kbb --backend sci -m kotoba-code.ink-main
 
 # leftover nbb subscription flags used to ride bin/kotoba-code when that
-# wrapper spawned clojure -M:run / nbb Ink. Guest treats infer as host-listen HOLD.
-# npx nbb -m kotoba-code.ink-main
+# wrapper spawned kbb -M:run / nbb Ink. Guest treats infer as host-listen HOLD.
+# kbb --backend sci -m kotoba-code.ink-main
 
 # leftover JVM library model IDs (not start):
-# clojure -M -m kotoba-code.main "inspect this project" /path/to/project codex:
-# clojure -M -m kotoba-code.main "inspect this project" /path/to/project claude:sonnet
+# kbb -M -m kotoba-code.main "inspect this project" /path/to/project codex:
+# kbb -M -m kotoba-code.main "inspect this project" /path/to/project claude:sonnet
 
 # leftover compatibility name (not start; does not exec kotoba run)
 # bin/claude
@@ -216,12 +216,12 @@ bin/kotoba-code
 - `/exit` — exit the TUI
 
 # leftover JVM library diagnostics (not start; guest classifies doctor/check/task as host-listen HOLD)
-# clojure -M -m kotoba-code.main --doctor /path/to/project z-ai/glm-5.2
-# clojure -M -m kotoba-code.main --check /path/to/project z-ai/glm-5.2
-# clojure -M -m kotoba-code.main --version
-# clojure -M -m kotoba-code.main --tools
-# clojure -M -m kotoba-code.main --capabilities-edn
-# clojure -M -m kotoba-code.main "…" /path/to/project murakumo:gemma3:4b
+# kbb -M -m kotoba-code.main --doctor /path/to/project z-ai/glm-5.2
+# kbb -M -m kotoba-code.main --check /path/to/project z-ai/glm-5.2
+# kbb -M -m kotoba-code.main --version
+# kbb -M -m kotoba-code.main --tools
+# kbb -M -m kotoba-code.main --capabilities-edn
+# kbb -M -m kotoba-code.main "…" /path/to/project murakumo:gemma3:4b
 ```
 
 
