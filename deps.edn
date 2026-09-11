@@ -8,7 +8,7 @@
  ;; There is no kotoba -M. :run is gone (not leftover-jvm-run-path exit 2),
  ;; including :jvm-opts --enable-native-access=ALL-UNNAMED.
  ;; Do not wrap Datalevin/LMDB JNI as a C .so.
- ;; Leftover Java in src/kotoba_code/main.clj stays as a library —
+ ;; Leftover Java in src/kotoba_code/main.cljk stays as a library —
  ;; not a start path. Default CI is kotoba compile + instantiateKotoba.
  ;; Leftover library graph (not operator start):
  ;;   langchain — ChatModel (openai-model → OpenRouter/Murakumo) + tools + kotoba-db
