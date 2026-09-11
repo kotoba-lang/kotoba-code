@@ -26,7 +26,7 @@
   The agent's prior edits are still on disk, so it continues from there."
   [task round test-out]
   (str task
-       "\n\n[gate round " round " FAILED — `clojure -X:test` is still RED.]\n"
+       "\n\n[gate round " round " FAILED — `kbb -X:test` is still RED.]\n"
        "Your previous edits are still on disk. Read them, diagnose the failures below,"
        " and fix until the suite is fully green.\n--- test output (tail) ---\n"
        (subs test-out (max 0 (- (count test-out) 1800)))))

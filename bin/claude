@@ -2,7 +2,7 @@
 set -eu
 
 # Leftover compatibility name. Not operator start.
-# Former `exec clojure -M:run` is gone, not leftover-jvm-run-path exit 2.
+# Former `exec kbb -M:run` is gone, not leftover-jvm-run-path exit 2.
 # Do not exec `kotoba run kotoba/main.kotoba` here: Release CLI source-run
 # of typed forms is kotoba/runtime-rejected. That is the intended public
 # command and a named CLI gap, not a working start.
@@ -27,5 +27,5 @@ echo "  sh scripts/kotoba-compile.sh" >&2
 echo "  sh scripts/kotoba-run.sh" >&2
 echo "intended public command (CLI source-run gap until the CLI accepts this guest):" >&2
 echo "  kotoba run kotoba/main.kotoba" >&2
-echo "leftover JVM library (not start): clojure -M -m kotoba-code.main $*" >&2
+echo "leftover JVM library (not start): kbb -M -m kotoba-code.main $*" >&2
 exit 127

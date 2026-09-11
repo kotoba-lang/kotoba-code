@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Leftover OpenRouter harness. Not operator start. :run is gone.
-# Leftover library invocation is clojure -M -m kotoba-code.main.
+# Leftover library invocation is kbb -M -m kotoba-code.main.
 set -euo pipefail
 
 export OR_KEY="${OR_KEY:-${OPENROUTER_API_KEY:-}}"
@@ -116,7 +116,7 @@ for model in "${MODELS[@]}"; do
     KC_MAX_TOKENS="$MAX_TOKENS" \
     KC_SESSION="compare-$slug" \
     # leftover JVM library (not operator start; :run is gone)
-    clojure -M -m kotoba-code.main "$TASK" "$work" "$model"
+    kbb -M -m kotoba-code.main "$TASK" "$work" "$model"
   ) > "$log" 2>&1
   code="$?"
   set -e
@@ -124,7 +124,7 @@ for model in "${MODELS[@]}"; do
   seconds="$((end - start))"
   rounds_seen="$(grep -Eo '\[[0-9]+/[0-9]+ rounds\]' "$log" | tail -1 | tr -dc '0-9/' || true)"
   git -C "$work" diff > "$OUT/$slug/diff.patch"
-  (cd "$work" && clojure -X:test) > "$OUT/$slug/final-test.log" 2>&1 || true
+  (cd "$work" && kbb -X:test) > "$OUT/$slug/final-test.log" 2>&1 || true
   status="fail"
   if [[ "$code" == "0" ]] && grep -q "0 failures, 0 errors" "$OUT/$slug/final-test.log"; then
     status="pass"

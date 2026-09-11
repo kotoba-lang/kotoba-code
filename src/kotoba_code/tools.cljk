@@ -9,7 +9,7 @@
           :apply-patch (fn [patch] -> string)           ; unified diff, project-confined
           :replace-text (fn [path old new] -> string)   ; exact single replacement
           :replace-range (fn [path start-line end-line replacement] -> string)
-          :run-clojure (fn [forms] -> string)            ; stdout+stderr of `clojure -M -e <forms>`
+          :run-clojure (fn [forms] -> string)            ; stdout+stderr of `kbb -M -e <forms>`
           :run-tests   (fn [] -> string)                 ; stdout+stderr of the test runner
           :list-dir    (fn [path] -> string)             ; names under a project dir
           :search      (fn [pattern] -> string)          ; regex grep across the project
@@ -223,7 +223,7 @@
           ((:replace-range host) path start_line end_line replacement))}
 
    {:name "run_clojure"
-    :description "Evaluate Clojure forms in the project via `clojure -M -e <forms>`; returns stdout+stderr."
+    :description "Evaluate Clojure forms in the project via `kbb -M -e <forms>`; returns stdout+stderr."
     :schema {:type "object"
              :properties {:forms {:type "string"}}
              :required ["forms"]}

@@ -188,7 +188,7 @@
     (is (true? (:ready? report)))
     (is (= {:action :run-task
             :reason :ready
-            :command "clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
+            :command "kbb -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
             :interactive "<task>"}
            (:next-action report)))))
 
@@ -223,7 +223,7 @@
                   :corrupt-lines 0
                   :errors []
                   :env ["KC_LOCAL_LOG_DIR" "KC_LOCAL_LOG"]
-                  :command "clojure -M -m kotoba-code.main --state-edn <project-root> [model-id]"}
+                  :command "kbb -M -m kotoba-code.main --state-edn <project-root> [model-id]"}
                  (:next-action report))))))))
 
 (deftest doctor-report-allows-disabled-local-log-with-kotoba-checkpointer
@@ -429,7 +429,7 @@
           (is (= :continue (get-in report [:budget :decision])))
           (is (= {:action :run-task
                   :reason :ready
-                  :command "clojure -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
+                  :command "kbb -M -m kotoba-code.main \"<task>\" <project-root> [model-id]"
                   :interactive "<task>"}
                  (:next-action report)))
           (is (contains? report :doctor))
@@ -463,7 +463,7 @@
     (is (= {:action :inspect-worktree
             :reason :pre-existing-worktree-changes
             :detail "M src/x.clj ?? tmp/generated.clj"
-            :command "clojure -M -m kotoba-code.main --status <project-root>"
+            :command "kbb -M -m kotoba-code.main --status <project-root>"
             :interactive ":status"
             :then "run the task after committing, stashing, or intentionally accepting the existing changes"}
            (:next-action report)))))
@@ -601,21 +601,21 @@
                  (runtime dir "moonshotai/kimi-k2.7-code")))))))
     (is (= {:action :reset-budget
             :reason :budget-exhausted
-            :command "clojure -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
+            :command "kbb -M -m kotoba-code.main --reset-budget <project-root> [model-id] [reason]"
             :interactive ":reset-budget [REASON]"}
            (:next-action
             (#'main/state-report
              (runtime-with-loop dir "murakumo:gemma3:4b" exhausted)))))
     (is (= {:action :resume
             :reason :status-stopped
-            :command "clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
+            :command "kbb -M -m kotoba-code.main --resume <project-root> [model-id]"
             :interactive ":resume"}
            (:next-action
             (#'main/state-report
              (runtime-with-loop dir "murakumo:gemma3:4b" stopped)))))
     (is (= {:action :resume
             :reason :interrupted
-            :command "clojure -M -m kotoba-code.main --resume <project-root> [model-id]"
+            :command "kbb -M -m kotoba-code.main --resume <project-root> [model-id]"
             :interactive ":resume"}
            (:next-action
             (#'main/state-report
@@ -685,7 +685,7 @@
                   :tool-errors 2
                   :tool "replace_text"
                   :result-tail "TOOL_ERROR: replace_text: missing required argument"
-                  :command "clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
+                  :command "kbb -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
                   :interactive ":history-edn 10"
                   :then "resume after reviewing the latest run"}
                  (:next-action report))))))))
@@ -722,7 +722,7 @@
                   :tool-errors 0
                   :tool nil
                   :result-tail nil
-                  :command "clojure -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
+                  :command "kbb -M -m kotoba-code.main --history-edn <project-root> [model-id] 10"
                   :interactive ":history-edn 10"
                   :then "resume after reviewing the latest run"}
                  (:next-action report))))))))
@@ -1628,11 +1628,11 @@
          (#'main/control-cli-args ["--stop" "root" "custom-model" "--" "operator" "stop"]))))
 
 (deftest read-cli-args-validates-before-host-call
-  (is (= {:error "usage: clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]"}
+  (is (= {:error "usage: kbb -M -m kotoba-code.main --read <project-root> <path> [start] [end]"}
          (#'main/read-cli-args nil "src/a.clj" nil nil nil)))
-  (is (= {:error "usage: clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]"}
+  (is (= {:error "usage: kbb -M -m kotoba-code.main --read <project-root> <path> [start] [end]"}
          (#'main/read-cli-args "root" nil nil nil nil)))
-  (is (= {:error "too many arguments for --read; usage: clojure -M -m kotoba-code.main --read <project-root> <path> [start] [end]"}
+  (is (= {:error "too many arguments for --read; usage: kbb -M -m kotoba-code.main --read <project-root> <path> [start] [end]"}
          (#'main/read-cli-args "root" "src/a.clj" "1" "2" ["extra"])))
   (is (= {:error "start line must be an integer: nope"}
          (#'main/read-cli-args "root" "src/a.clj" "nope" nil nil)))

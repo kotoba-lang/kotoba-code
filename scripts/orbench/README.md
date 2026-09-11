@@ -21,7 +21,7 @@ picks whichever they find first.
 |  | `compare-openrouter-models.sh` | `scripts/orbench` |
 |---|---|---|
 | task | write Clojure against failing tests | port `.cljc` → `.kotoba` |
-| gate | `clojure -M:test` on a synthetic fixture | the Kotoba compiler, on held-out real ports |
+| gate | `kbb -M:test` on a synthetic fixture | the Kotoba compiler, on held-out real ports |
 | oracle | tests written for the fixture | landed cores in `kotoba-lang/murakumo`, kept out of the prompt |
 | models | a paid shortlist | anything, including `:free` |
 
@@ -33,13 +33,13 @@ Use the shell one to ask *can this model write Clojure*. Use this one to ask
 ```bash
 export ORBENCH_ROOT=/path/to/west/superproject   # required; no default
 cd scripts/orbench
-npx --no-install nbb bench.cljs models           # cache the price catalogue
-npx --no-install nbb bench.cljs validate         # prove the gate can fail
-npx --no-install nbb bench.cljs agent 3 200 6 \
+npx --no-install kbb --backend sci bench.cljk models           # cache the price catalogue
+npx --no-install kbb --backend sci bench.cljk validate         # prove the gate can fail
+npx --no-install kbb --backend sci bench.cljk agent 3 200 6 \
   poolside/laguna-s-2.1:free nvidia/nemotron-3-super-120b-a12b:free
-npx --no-install nbb bench.cljs report           # correctness, speed, cost
-npx --no-install nbb bench.cljs quality          # duplicated truth, fuel/call
-npx --no-install nbb bench.cljs mutate t2-prices work/....kotoba  # holes in the battery
+npx --no-install kbb --backend sci bench.cljk report           # correctness, speed, cost
+npx --no-install kbb --backend sci bench.cljk quality          # duplicated truth, fuel/call
+npx --no-install kbb --backend sci bench.cljk mutate t2-prices work/....kotoba  # holes in the battery
 ```
 
 The key is read from `$OPENROUTER_API_KEY`, else from the kagi item
@@ -63,7 +63,7 @@ times from memory, and once the hand-applied edit silently failed to match, so a
 green run read as "the battery is blind" when nothing had been mutated at all.
 
 ```bash
-npx --no-install nbb bench.cljs mutate <task-id> path/to/port.kotoba
+npx --no-install kbb --backend sci bench.cljk mutate <task-id> path/to/port.kotoba
 ```
 
 Each mutation is one token — a string literal off by a character, an integer off
@@ -109,7 +109,7 @@ failure. They are the reason the code is shaped the way it is
 
 ```bash
 ORBENCH_ENDPOINT=https://infer.murakumo.cloud/v1/chat/completions \
-  npx --no-install nbb bench.cljs agent 4 30 1 murakumo-main
+  npx --no-install kbb --backend sci bench.cljk agent 4 30 1 murakumo-main
 ```
 
 Any OpenAI-compatible endpoint. No bearer token is sent, and the model id is
