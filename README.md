@@ -105,7 +105,7 @@ Ollama can still sit behind an OpenAI-compatible gateway, but it is not a first-
 dependency here. In this workspace the direct `ollama` mention is in the yukkuri
 asset scorer, not in `kotoba-code`.
 
-`src/kotoba_code/inference.cljc` adds the CLJC boundary for local/web inference:
+`src/kotoba_code/inference.cljk` adds the CLJC boundary for local/web inference:
 
 ```clojure
 (require '[kotoba-code.inference :as infer])
