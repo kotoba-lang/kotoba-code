@@ -1,7 +1,6 @@
 (ns kotoba-code.inference-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [kotoba-code.inference :as infer])
-  (:import [java.nio.file Files]))
+  (:require [kotoba.io :as kio] [clojure.test :refer [deftest is testing]]
+            [kotoba-code.inference :as infer]))
 
 (deftest selects-web-kotoba-wasm-by-default
   (let [plan (infer/select-plan {:target :web
@@ -23,8 +22,8 @@
                                          :prefer [:openvino]}))))))
 
 (deftest load-weights-from-local-file
-  (let [tmp (Files/createTempFile "kotoba-code-weight" ".bin" (make-array java.nio.file.attribute.FileAttribute 0))
-        _   (Files/write tmp (byte-array [1 2 3 4]) (make-array java.nio.file.OpenOption 0))
+  (let [tmp (kio/temp-file "kotoba-code-weight" ".bin")
+        _   (kio/write-bytes tmp (byte-array [1 2 3 4]))
         loaded (infer/load-weights! (str tmp))]
     (is (= 4 (:byte-length loaded)))
     (is (= [1 2 3 4] (vec (:bytes loaded))))))

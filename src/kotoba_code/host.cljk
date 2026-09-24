@@ -6,7 +6,7 @@
   Filesystem access is sandboxed to a project root (+ optional read roots); writes
   are recorded so a failed gate can roll the working tree back via git."
   (:require [clojure.java.io :as io]
-            [clojure.java.shell :as sh]
+            [kotoba.process :as sh]
             [kotoba.lang.text :as str]
             [json.data-json :as json])
   (:import [java.net.http HttpClient HttpRequest HttpRequest$BodyPublishers

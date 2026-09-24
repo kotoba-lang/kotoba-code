@@ -1,5 +1,5 @@
 (ns kotoba-code.main-test
-  (:require [kotoba.lang.edn :as edn]
+  (:require [kotoba.io :as kio] [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [kotoba.lang.text :as str]
             [clojure.test :refer [deftest is]]
@@ -8,9 +8,8 @@
             [langchain.message :as msg]))
 
 (defn- temp-dir []
-  (.toFile (java.nio.file.Files/createTempDirectory
-            "kotoba-code-main-test"
-            (make-array java.nio.file.attribute.FileAttribute 0))))
+  (kio/temp-dir
+            "kotoba-code-main-test"))
 
 (defn- runtime [root model-id]
   {:root (.getPath (io/file root))

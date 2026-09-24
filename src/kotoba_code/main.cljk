@@ -52,7 +52,7 @@
   Optional kotoba-Datom session persistence (resumable, as-of):
     KOTOBA_URL + KOTOBA_GRAPH (+ KOTOBA_TOKEN) → checkpoints land on the kotoba node.
     KC_SESSION sets the session/thread id (default \"kotoba-code\")."
-  (:require [kotoba.lang.edn :as edn]
+  (:require [kotoba.bytes :as kbytes] [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [kotoba.lang.text :as str]
             [kotoba-code.host :as host]
@@ -69,7 +69,6 @@
            [java.net URI]
            [java.nio ByteBuffer]
            [java.nio.channels FileChannel]
-           [java.nio.charset StandardCharsets]
            [java.nio.file StandardOpenOption])
   (:gen-class))
 
@@ -348,7 +347,7 @@
                                 :events (:events step)
                                 :governor (:governor step)})
                        "\n")
-            bytes (.getBytes entry StandardCharsets/UTF_8)]
+            bytes (kbytes/utf8-bytes entry)]
         (locking (local-log-jvm-lock f)
           (with-open [ch (FileChannel/open (.toPath f)
                                            (into-array StandardOpenOption
