@@ -3,7 +3,7 @@
 
   Output stays in the terminal's native scrollback. JLine owns terminal sizing,
   line editing, history, signals, Unicode input, and cursor restoration."
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.lang.text :as str])
   (:import [java.nio.file Paths]
            [org.jline.reader EndOfFileException LineReader LineReader$Option LineReaderBuilder

@@ -1,5 +1,5 @@
 (ns kotoba-code.cli-test
-  (:require [json.data-json :as json]
+  (:require [kotoba.bytes :as kbytes] [kotoba.io :as kio] [json.data-json :as json]
             [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
@@ -10,9 +10,8 @@
            [java.util.concurrent Executors TimeUnit]))
 
 (defn- temp-dir [prefix]
-  (.toFile (java.nio.file.Files/createTempDirectory
-            prefix
-            (make-array java.nio.file.attribute.FileAttribute 0))))
+  (kio/temp-dir
+            prefix))
 
 (defn- git! [dir & args]
   (let [{:keys [exit out err]} (apply sh/sh "git" (concat args [:dir (.getPath dir)]))]
@@ -102,7 +101,7 @@
               (if requires-root? args []))))
 
 (defn- json-response [exchange status body]
-  (let [bytes (.getBytes (json/write-str body) "UTF-8")
+  (let [bytes (kbytes/utf8-bytes (json/write-str body))
         headers (.getResponseHeaders exchange)]
     (.add headers "Content-Type" "application/json")
     (.sendResponseHeaders exchange status (count bytes))
