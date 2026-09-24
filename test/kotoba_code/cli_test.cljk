@@ -1,6 +1,6 @@
 (ns kotoba-code.cli-test
   (:require [json.data-json :as json]
-            [clojure.edn :as edn]
+            [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [kotoba.lang.text :as str]
