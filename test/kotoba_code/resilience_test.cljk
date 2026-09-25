@@ -1,5 +1,5 @@
 (ns kotoba-code.resilience-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.lang.error :as kerror] [clojure.test :refer [deftest is testing]]
             [langchain.model :as model]
             [langchain.message :as msg]
             [kotoba-code.resilience :as r])
@@ -31,7 +31,7 @@
       (let [e (try
                 (model/-generate m [(msg/user "hi")] {})
                 nil
-                (catch clojure.lang.ExceptionInfo e e))]
+                (catch kerror/ExceptionInfo e e))]
         (is (some? e))
         (is (= 3 (:retry/attempts-used (ex-data e))))
         (is (= 3 (:retry/attempts-limit (ex-data e))))
@@ -46,7 +46,7 @@
                (swap! calls inc)
                (throw (ex-info "bad api key" {:status 401}))))
            {:attempts 4 :backoff-ms 0})]
-    (is (thrown? clojure.lang.ExceptionInfo
+    (is (thrown? kerror/ExceptionInfo
                  (model/-generate m [(msg/user "hi")] {})))
     (is (= 1 @calls) "auth/configuration failures should not burn retry budget")))
 

@@ -1,5 +1,5 @@
 (ns kotoba-code.main-test
-  (:require [kotoba.io :as kio] [kotoba.lang.edn :as edn]
+  (:require [kotoba.lang.error :as kerror] [kotoba.io :as kio] [kotoba.lang.edn :as edn]
             [clojure.java.io :as io]
             [kotoba.lang.text :as str]
             [clojure.test :refer [deftest is]]
@@ -1502,7 +1502,7 @@
             :usage {:tokens 0 :tool-calls 0 :rounds 0}
             :events [{:type :gate :payload {:green? true}}]})
           (is false "expected local log write failure")
-          (catch clojure.lang.ExceptionInfo e
+          (catch kerror/ExceptionInfo e
             (is (re-find #"local supervisor log write failed" (ex-message e)))
             (is (str/includes? (ex-message e) "[REDACTED]"))
             (is (not (re-find #"abc123" (ex-message e))))

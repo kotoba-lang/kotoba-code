@@ -6,8 +6,8 @@
   such as Kotoba WASM, ONNX Runtime Web, llama.cpp, Candle, or Murakumo."
   #?(:clj
      (:import [java.io ByteArrayOutputStream]
-              [java.net URI]
-              [java.nio.file Files Path Paths])))
+              [java.net URI]))
+  (:require [kotoba.io :as kio]))
 
 (def target-profiles
   {:web
@@ -110,7 +110,7 @@
      :clj
      (let [bytes (if (url-like? source)
                    (read-all-bytes (.openStream (.toURL (URI/create source))))
-                   (Files/readAllBytes (Paths/get source (make-array String 0))))]
+                   (kio/read-all-bytes source))]
        {:source source
         :bytes bytes
         :byte-length (alength bytes)})))
