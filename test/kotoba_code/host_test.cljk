@@ -1,5 +1,5 @@
 (ns kotoba-code.host-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.lang.error :as kerror] [clojure.java.io :as io]
             [clojure.java.shell :as sh]
             [clojure.test :refer [deftest is]]
             [kotoba-code.host :as host]
@@ -234,7 +234,7 @@
     (try
       ((:rollback h))
       (is false "expected rollback failure")
-      (catch clojure.lang.ExceptionInfo e
+      (catch kerror/ExceptionInfo e
         (is (re-find #"rollback git checkout failed" (ex-message e)))
         (is (seq @(:touched h)))))
     (is (.renameTo git-dir-hidden git-dir))
