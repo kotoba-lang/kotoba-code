@@ -1,0 +1,6 @@
+;; kotoba-lang/kotoba-harness commit used by bin/kotoba-code-system-one.
+;; 6dc0ea0: staged System One search with outward backtracking on stop,
+;; kotoba-only verification (check + wasm32-browser + instantiateKotoba),
+;; offline validate mode.
+{:repo "https://github.com/kotoba-lang/kotoba-harness.git"
+ :sha "6dc0ea06ec1c19bc4be6549590fc9c0629864622"}
