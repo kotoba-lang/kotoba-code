@@ -43,3 +43,21 @@ jobs:
           set +e
           sh scripts/amu-native.sh kotoba/main.kotoba
           test $? -eq 78
+
+  system-one-offline:
+    # System One Coding through the pinned kotoba-lang/kotoba-harness:
+    # project shape, typed catalog, stage dependencies and baseline splice.
+    # Offline: no kotoba verification and no model call (those need the
+    # kotoba CLI with -M, amu's browser host and OpenRouter credit).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install nbb
+        run: npm install -g nbb@1.4.208
+      - name: Validate system-one/budget.edn
+        run: sh bin/kotoba-code-system-one validate
+      - name: kotoba-harness offline search tests
+        run: cd "$(sh bin/kotoba-code-system-one home)" && nbb -cp src:test test/run.cljs

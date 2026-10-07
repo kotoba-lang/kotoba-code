@@ -1,0 +1,7 @@
+;; kotoba-lang/kotoba-harness commit used by bin/kotoba-code-system-one.
+;; d11deb0: runs nbb from the harness root (a caller's nbb.edn is not loaded);
+;; staged System One search with outward backtracking on stop,
+;; kotoba-only verification (check + wasm32-browser + instantiateKotoba),
+;; offline validate mode.
+{:repo "https://github.com/kotoba-lang/kotoba-harness.git"
+ :sha "d11deb0448498a23449bc8f9806b24f726bac5fd"}

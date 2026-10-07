@@ -58,6 +58,36 @@ library tests live in `.github/workflows/leftover-jvm.yml`
 (`workflow_dispatch` only, labeled leftover). Default CI is job
 `kotoba-operator`.
 
+## System One Coding (kotoba-harness)
+
+kotoba-code can assemble its own typed kotoba functions with
+[kotoba-lang/kotoba-harness](https://github.com/kotoba-lang/kotoba-harness):
+TypeSafe Jev chooses typed blocks one hole at a time (never source text), the
+harness emits kotoba typed-subset source, and kotoba verifies it
+(`kotoba -M check`, then the module plus fixed exhaustive checks compiled to
+wasm32-browser and run through `instantiateKotoba`). The search backtracks
+outward when the policy reports that no candidate fits, so a wrong outermost
+operation can still be repaired.
+
+`system-one/budget.edn` is kotoba-code's durable outer-loop budget
+(`budget-left`, `may-call`; 256 exhaustive cases). The harness commit is pinned
+in `kotoba-harness.pin.edn` and fetched into
+`${XDG_CACHE_HOME:-~/.cache}/kotoba-harness/<sha>`, outside this repository so
+nbb never loads this repository's `nbb.edn` for it (override with
+`KOTOBA_HARNESS_HOME`).
+
+```sh
+sh bin/kotoba-code-system-one validate   # offline; also run in CI
+sh bin/kotoba-code-system-one known      # kotoba verification of known bodies
+sh bin/kotoba-code-system-one wrong      # negative control (rejected)
+OPENROUTER_API_KEY=... sh bin/kotoba-code-system-one jev
+```
+
+`known`/`wrong`/`jev` need a kotoba CLI that provides `-M check` and
+`-M compile --target wasm32-browser`, and `KOTOBA_BROWSER_HOST` pointing at
+amu's `runtime/browser-host.mjs`. `jev` spends OpenRouter credit (fractions of
+a cent per run). Receipts land in `target/system-one/`.
+
 ## Three pillars → one project
 
 | Pillar | What it gives | Reused from |

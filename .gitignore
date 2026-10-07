@@ -6,3 +6,4 @@
 **/.cpcache/
 *.log
 /.compare-openrouter/
+/.nbb/

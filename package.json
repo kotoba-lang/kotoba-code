@@ -7,7 +7,9 @@
     "test": "sh scripts/kotoba-run.sh",
     "check": "sh scripts/kotoba-compile.sh && sh scripts/kotoba-run.sh",
     "tui": "kbb --backend sci -m kotoba-code.ink-main",
-    "test:cljs": "kbb --backend sci -m kotoba-code.ink-test"
+    "test:cljs": "kbb --backend sci -m kotoba-code.ink-test",
+    "system-one": "sh bin/kotoba-code-system-one",
+    "system-one:validate": "sh bin/kotoba-code-system-one validate"
   },
   "dependencies": {
     "ink": "7.1.1",
