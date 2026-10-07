@@ -60,4 +60,4 @@ jobs:
       - name: Validate system-one/budget.edn
         run: sh bin/kotoba-code-system-one validate
       - name: kotoba-harness offline search tests
-        run: cd target/kotoba-harness && nbb -cp src:test test/run.cljs
+        run: cd "$(sh bin/kotoba-code-system-one home)" && nbb -cp src:test test/run.cljs

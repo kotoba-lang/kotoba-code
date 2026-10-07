@@ -71,8 +71,10 @@ operation can still be repaired.
 
 `system-one/budget.edn` is kotoba-code's durable outer-loop budget
 (`budget-left`, `may-call`; 256 exhaustive cases). The harness commit is pinned
-in `kotoba-harness.pin.edn` and fetched into `target/kotoba-harness`
-(override with `KOTOBA_HARNESS_HOME`).
+in `kotoba-harness.pin.edn` and fetched into
+`${XDG_CACHE_HOME:-~/.cache}/kotoba-harness/<sha>`, outside this repository so
+nbb never loads this repository's `nbb.edn` for it (override with
+`KOTOBA_HARNESS_HOME`).
 
 ```sh
 sh bin/kotoba-code-system-one validate   # offline; also run in CI
