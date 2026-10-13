@@ -1,6 +1,6 @@
 # kotoba-code
 
-A **model-neutral, test-gated, kotoba-Datom-backed terminal coding agent** — in Clojure.
+A **model-neutral, test-gated, kotoba-Datom-backed terminal coding agent** — written in kotoba-lang (`.cljk`).
 
 It provides a full-screen terminal UI for human sessions, a stable line-mode
 interface for pipes, and one-shot/headless commands for scripts and CI. The TUI
@@ -13,8 +13,10 @@ tools, and persist every session's turn-history **as-of on the kotoba Datom log*
 runs are resumable, auditable, and time-travelable. The coding agent becomes an
 organism on the same substrate as the UNSPSC actors — same checkpointer, same node.
 
-This is the native Clojure successor to the throwaway Python bake-off harness
-(`_modelbake/refactor_runner.py`), built entirely on the kotoba-clj stack.
+This is the kotoba-lang successor to the throwaway Python bake-off harness
+(`_modelbake/refactor_runner.py`), built on the kotoba-lang `langchain` and
+`langgraph` libraries plus the kotoba-lang `error`/`bytes`/`io`/`process`/`edn`/`text`/`json`
+libraries (see `deps.edn`).
 
 ## How to start now
 
