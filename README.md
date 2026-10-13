@@ -1,22 +1,31 @@
 # kotoba-code
 
-A **model-neutral, test-gated, kotoba-Datom-backed terminal coding agent** — written in kotoba-lang (`.cljk`).
+A **model-neutral, test-gated, kotoba-Datom-backed terminal coding agent** for kotoba-lang.
 
-It provides a full-screen terminal UI for human sessions, a stable line-mode
-interface for pipes, and one-shot/headless commands for scripts and CI. The TUI
-and headless surfaces share the same capability-confined tools, rollback gate,
-durable budget, leases, and resumable session log.
+**Active implementation: the `.kotoba` guest.** The operator entry is
+`kotoba/main.kotoba` (see `kotoba/operator-entries.edn`). Today it is a
+command-admission and model-routing guest, not yet the full agent: it admits
+the catalog commands (`help`, `version`, `tools`, `commands`, `capabilities` →
+status 11), returns usage (2) for blank or unknown commands, classifies a
+model id as `murakumo` / `subscription` (`codex:`, `claude:`) / `openrouter`,
+and answers every host-listen command (`task`, `interactive`, `tui`, `doctor`,
+`check`, `persist`, `infer`) with the explicit **HOLD** status 90. HTTP
+inference, kotoba-Datom persistence, filesystem/git tools and the TUI are not
+implemented in the guest; HOLD is reported rather than a fake `ok`.
 
-Drive *any* OpenAI-compatible model (GLM/Kimi/Qwen via OpenRouter, or the Murakumo gateway)
-through a ReAct loop with `read_file` / `write_file` / `run_clojure` / `run_tests`
-tools, and persist every session's turn-history **as-of on the kotoba Datom log** so
-runs are resumable, auditable, and time-travelable. The coding agent becomes an
-organism on the same substrate as the UNSPSC actors — same checkpointer, same node.
-
-This is the kotoba-lang successor to the throwaway Python bake-off harness
-(`_modelbake/refactor_runner.py`), built on the kotoba-lang `langchain` and
-`langgraph` libraries plus the kotoba-lang `error`/`bytes`/`io`/`process`/`edn`/`text`/`json`
-libraries (see `deps.edn`).
+**Leftover JVM implementation: the `.cljk` sources.** `src/kotoba_code/` —
+with `src/kotoba_code/main.cljk` as its library dispatch — is the earlier
+agent: a full-screen terminal UI, a line-mode interface for pipes, and
+one-shot/headless commands sharing capability-confined tools, a rollback gate,
+a durable budget, leases and a resumable session log. It drives any
+OpenAI-compatible model (GLM/Kimi/Qwen via OpenRouter, or the Murakumo gateway)
+through a ReAct loop with `read_file` / `write_file` / `run_clojure` /
+`run_tests` tools and persists each session's turn history as-of on the kotoba
+Datom log. It was the kotoba-lang successor to the throwaway Python bake-off
+harness (`_modelbake/refactor_runner.py`) and is built on the kotoba-lang
+`langchain` and `langgraph` libraries plus `error`/`bytes`/`io`/`process`/`edn`/`text`/`json`.
+`deps.edn` keeps that graph as the leftover library graph; it is not an
+operator start path.
 
 ## How to start now
 
